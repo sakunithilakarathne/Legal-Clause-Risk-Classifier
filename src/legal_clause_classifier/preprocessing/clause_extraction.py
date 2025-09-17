@@ -261,6 +261,17 @@ def normalize_text(text: str) -> str:
             .replace("—", "-")
     )
 
+    # # Remove common page headers/footers
+    # # Example: "Page 3 of 12"
+    # text = re.sub(r"\bPage\s+\d+\s+of\s+\d+\b", " ", text, flags=re.I)
+
+    # # Remove standalone "Page X" or "Page: X"
+    # text = re.sub(r"\bPage[:\s]*\d+\b", " ", text, flags=re.I)
+
+    # # Remove company-like headers/footers (heuristic: all-caps lines with >3 words)
+    # text = re.sub(r"^[A-Z\s]{5,}$", " ", text, flags=re.MULTILINE)
+
+
     # Collapse multiple spaces/newlines into a single space
     text = " ".join(text.split())
 
