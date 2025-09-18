@@ -3,6 +3,7 @@ from src.legal_clause_classifier import *
 from src.legal_clause_classifier.preprocessing.schema_normalization import *
 from src.legal_clause_classifier.preprocessing.data_cleaning import *
 from src.legal_clause_classifier.preprocessing.clause_extraction import *
+from src.legal_clause_classifier.preprocessing.data_splitting import *
 
 
 if __name__ == "__main__":
@@ -36,18 +37,8 @@ if __name__ == "__main__":
     # print("✅ Clause Category pairs saved to RAW Data Directory ")
 
 
-    # Filter and Remove Duplicates
-    # filtered_df = filter_normalized_schema(normalized_df)
-    # filtered_df.to_csv(RAW_DATA_DIR/'cuad_filtered.csv', index=False, encoding="utf-8")
-    # print(f"New Total samples: {len(filtered_df)}")
-    # print("✅ Filtered Dataset saved")
-
-    # unique_df = remove_duplicates(filtered_df)
-    # unique_df.to_csv(RAW_DATA_DIR/'unique_clauses.csv', index=False, encoding="utf-8")
-    # print(unique_df.head(3))
-    # print(f"New Total samples: {len(unique_df)}")
-    # print("✅ Unique Clauses set saved")
-
-    # # filtered_df = pd.read_csv(RAW_DATA_DIR/'filtered_cuad_normalized.csv')
-    # # print(f"Total samples: {len(df)}")
-    # # print("✅ CUAD Dataset Read")
+    # Train, Test split
+    train_df, test_df, val_df = split_dataset()
+    train_df.to_parquet("train.parquet", index=False)
+    val_df.to_parquet("val.parquet", index=False)
+    test_df.to_parquet("test.parquet", index=False)
