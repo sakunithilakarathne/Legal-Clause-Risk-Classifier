@@ -4,17 +4,20 @@ import spacy
 import pandas as pd
 import logging
 from src.legal_clause_classifier.preprocessing.data_cleaning import *
+from src.legal_clause_classifier.utils.logger import get_logger
 
 nlp = spacy.load("en_core_web_sm")
 
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logger = get_logger("preprocessing", "preprocessing.log")
 
 
 
 # Detecting Paragraph beginnings
 def detect_paragraphs(text: str):
+    logger.info("Detecting paragraph boundaries...")
+
     """
     Detect paragraph boundaries in the document.
     Each paragraph is treated as a potential clause boundary.
@@ -27,11 +30,17 @@ def detect_paragraphs(text: str):
             continue
         start = match.start(1)
         paragraphs.append((start, para_text))
+
+    logger.info(f"Detected {len(paragraphs)} paragraphs.")
+
     return paragraphs
 
 
 # Expanding clauses to nearest paragraphs
 def snap_to_clause(context, start_char, end_char, paragraphs):
+
+    logger.debug(f"Snapping to clause for start_char={start_char}, end_char={end_char}")
+
     # Find nearest paragraph above and below
     above, below = None, None
     for (offset, para) in paragraphs:
@@ -48,6 +57,9 @@ def snap_to_clause(context, start_char, end_char, paragraphs):
 
     # Fallback: sentence splitter if clause is too short
     if len(clause_text.split()) < 12:
+
+        logger.debug("Clause too short, using sentence-level fallback.")
+
         doc = nlp(context[max(0, start_char-256): start_char+512])
         sents = [s for s in doc.sents]
         for s in sents:
@@ -64,6 +76,9 @@ def snap_to_clause(context, start_char, end_char, paragraphs):
 
 # Merge Overlapping clauses
 def merge_clauses(clauses):
+
+    logger.info("Merging overlapping clauses...")
+
     merged = []
     for row in sorted(clauses, key=lambda x: (x["doc_id"], x["start_offset"])):
         if merged and row["doc_id"] == merged[-1]["doc_id"]:
@@ -75,6 +90,9 @@ def merge_clauses(clauses):
                 prev["clause_text"] = row["clause_text"]  # refresh text from last span
                 continue
         merged.append(row)
+
+    logger.info(f"Merged down to {len(merged)} clauses.")
+
     return merged
 
 
@@ -82,6 +100,9 @@ def merge_clauses(clauses):
 
 # Generate negative samples
 def sample_negatives(context, paragraphs, positive_offsets, doc_id, n_samples=5):
+
+    logger.info(f"Generating up to {n_samples} negative samples for doc_id={doc_id}")
+
     negatives = []
     for i, (start, para) in enumerate(paragraphs):
         end = paragraphs[i+1][0] if i+1 < len(paragraphs) else len(context)
@@ -98,12 +119,18 @@ def sample_negatives(context, paragraphs, positive_offsets, doc_id, n_samples=5)
                     "categories_set": {"no-risk"}
                 })
     random.shuffle(negatives)
+
+    logger.info(f"Sampled {len(negatives[:n_samples])} negatives.")
+
     return negatives[:n_samples]
 
 
 
 # Main Clause Extraction 
 def extract_clauses(df: pd.DataFrame) -> pd.DataFrame:
+
+    logger.info("Starting clause extraction process...")
+
     results = []
     for doc_id, group in df.groupby("doc_id"):
         context = group["context"].iloc[0]
@@ -135,6 +162,8 @@ def extract_clauses(df: pd.DataFrame) -> pd.DataFrame:
             })
             positive_offsets.append(start_offset)
 
+        logger.info(f"Extracted {len(positive_offsets)} positive clauses from {doc_id}")
+
         # Merge overlaps 
         results = merge_clauses(results)
 
@@ -151,5 +180,6 @@ def extract_clauses(df: pd.DataFrame) -> pd.DataFrame:
 
     # Deduplicate on normalized text
     results = deduplicate_clauses(results)
+    logger.info(f"Final clause count after deduplication: {len(results)}")
 
     return pd.DataFrame(results)
