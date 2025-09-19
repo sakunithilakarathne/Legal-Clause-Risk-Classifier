@@ -2,14 +2,23 @@ import json
 import re
 import pandas as pd
 from pathlib import Path
-from src.legal_clause_classifier.preprocessing.data_cleaning import *
+import logging
 
+from src.legal_clause_classifier.utils.logger import get_logger
+
+logger = get_logger("preprocessing", "preprocessing.log")
 
 
 def load_dataset(file_path: str) -> dict:
-    with open(file_path,"r",encoding="utf-8") as file:
-        dataset = json.load(file)
-    return dataset
+    logging.info(f"Loading dataset from {file_path}")
+    try:
+        with open(file_path,"r",encoding="utf-8") as file:
+            dataset = json.load(file)
+        logging.info(f"Successfully loaded dataset with {len(dataset.get('data', []))} documents.")
+        return dataset
+    except Exception as e:
+        logging.error(f"Failed to load dataset: {e}")
+        raise
 
 
 def normalize_cuad_schema(data: dict) -> pd.DataFrame:
@@ -28,6 +37,9 @@ def normalize_cuad_schema(data: dict) -> pd.DataFrame:
     - start_char: answer start index in context
     - end_char: answer end index in context
     """
+
+    logging.info("Starting normalization of CUAD schema...")
+
     records = []
     pair_counter = 0
     doc_counter = 0
@@ -55,7 +67,6 @@ def normalize_cuad_schema(data: dict) -> pd.DataFrame:
                 # Handle multiple answers → expand
                 if qa.get("answers"):
                     for ans in qa["answers"]:
-                        #answer_text = normalize_text(ans.get("text", ""))
                         answer_text = ans.get("text", "")
                         start_char = ans.get("answer_start", -1)
                         end_char = start_char + len(answer_text) if start_char != -1 else -1
@@ -90,6 +101,6 @@ def normalize_cuad_schema(data: dict) -> pd.DataFrame:
                         "end_char": -1,
                         "is_impossible": True
                     })
-
+    logging.info(f"Normalization complete: {doc_counter} documents, {pair_counter} QA pairs created.")
     return pd.DataFrame(records)
 

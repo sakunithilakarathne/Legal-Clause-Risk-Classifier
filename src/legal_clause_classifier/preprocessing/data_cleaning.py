@@ -4,9 +4,14 @@ import json
 from pathlib import Path
 import ast
 import re
+import logging
+
+from src.legal_clause_classifier.utils.logger import get_logger
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+logger = get_logger("preprocessing", "preprocessing.log"    )
 
 def normalize_text(text: str) -> str:
     """
@@ -18,6 +23,7 @@ def normalize_text(text: str) -> str:
     - Strip leading/trailing whitespace
     """
     if not isinstance(text, str):
+        logger.warning("Received non-string input in normalize_text.")
         return ""
 
     # Unicode normalization
@@ -48,6 +54,12 @@ def normalize_text(text: str) -> str:
 
 # Remove near duplicates
 def deduplicate_clauses(clauses, sim_threshold=0.9):
+    logger.info(f"Starting deduplication on {len(clauses)} clauses (threshold={sim_threshold})")
+
+    if not clauses:
+        logger.warning("Empty clause list passed to deduplicate_clauses.")
+        return []
+
     texts = [c["clause_text"] for c in clauses]
     vectorizer = TfidfVectorizer().fit_transform(texts)
     sim_matrix = cosine_similarity(vectorizer)
@@ -59,6 +71,8 @@ def deduplicate_clauses(clauses, sim_threshold=0.9):
         dupes = {j for j, sim in enumerate(row) if sim > sim_threshold}
         seen |= dupes
         keep.append(clauses[i])
+        
+    logger.info(f"Deduplication complete. Reduced from {len(clauses)} to {len(keep)} unique clauses.")
     return keep
 
 
