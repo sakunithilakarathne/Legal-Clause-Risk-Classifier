@@ -205,3 +205,17 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+*.parquet
+*.csv
+*.json
+*.pkl
+*.pt
+*.log
+.cache/
+# Ignore JetBrains IDE config folder
+.idea/
+
+# Ignore artifacts folder (models, outputs, etc)
+artifacts/
