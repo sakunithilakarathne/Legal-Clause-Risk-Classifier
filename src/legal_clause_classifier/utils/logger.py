@@ -1,10 +1,14 @@
 import logging
 import os
+from datetime import datetime
+import uuid
 
-def get_logger(name: str, log_file: str) -> logging.Logger:
+def get_logger(name: str) -> logging.Logger:
     """
     Set up and return a logger with the given name and output file.
     """
+
+    run_id = datetime.now().strftime("%Y%m%d_%H%M%S") + f"_{uuid.uuid4().hex[:8]}"
     # Ensure logs directory exists
     os.makedirs("logs", exist_ok=True)
 
@@ -14,8 +18,9 @@ def get_logger(name: str, log_file: str) -> logging.Logger:
 
     # Avoid duplicate handlers
     if not logger.handlers:
+        log_filename = f"run_{run_id}.log"
         # Create file handler
-        file_handler = logging.FileHandler(f"logs/{log_file}", mode="w")
+        file_handler = logging.FileHandler(f"logs/{log_filename}", mode="w")
         file_handler.setFormatter(logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         ))
@@ -29,5 +34,7 @@ def get_logger(name: str, log_file: str) -> logging.Logger:
         # Add handlers to logger
         logger.addHandler(file_handler)
         logger.addHandler(console_handler)
+
+        logger.run_id = run_id
 
     return logger
