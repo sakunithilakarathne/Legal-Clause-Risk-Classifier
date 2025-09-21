@@ -10,7 +10,8 @@ nlp = spacy.load("en_core_web_sm")
 
 
 # Configure logging
-logger = get_logger("preprocessing", "preprocessing.log")
+logger = get_logger("preprocessing")
+run_id = logger.run_id
 
 
 
@@ -145,7 +146,7 @@ def extract_clauses(df: pd.DataFrame) -> pd.DataFrame:
                 context, row["start_char"], row["end_char"], headings
             )
 
-            # Normalize AFTER snap_to_clause
+            # Normalizing clause text
             clause_text = normalize_text(clause_text)
 
             if len(clause_text.split()) < 12:
