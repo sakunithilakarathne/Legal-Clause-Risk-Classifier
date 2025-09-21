@@ -4,7 +4,8 @@ from collections import Counter
 import logging
 from src.legal_clause_classifier.utils.logger import get_logger
 
-logger = get_logger("preprocessing", "preprocessing.log")
+logger = get_logger("preprocessing")
+run_id = logger.run_id
 
 
 def split_dataset(dataset):
@@ -27,7 +28,6 @@ def split_dataset(dataset):
             random_state=42
             )
         logger.info(f"Train docs: {len(train_docs)}, Temp docs: {len(temp_docs)}")
-        print("Train docs:", train_df["doc_id"].nunique(), "clauses:", len(train_df))
 
         val_docs, test_docs = train_test_split(
             temp_docs,
@@ -46,8 +46,9 @@ def split_dataset(dataset):
     test_df  = dataset[dataset["doc_id"].isin(test_docs["doc_id"])]
 
     logger.info(f"Split complete. Train: {len(train_df)}, Val: {len(val_df)}, Test: {len(test_df)}")
-    logger.info(f"Train docs: {train_df["doc_id"].nunique()}, Clauses: {len(train_df)}")
-    logger.info(f"Test docs: {train_df["doc_id"].nunique()}, Clauses: {len(train_df)}")
-    logger.info(f"Train docs: {train_df["doc_id"].nunique()}, Clauses: {len(train_df)}")
+    # logger.info(f"Train docs: {train_df["doc_id"].nunique()}, Clauses: {len(train_df)}")
+    # logger.info(f"Train docs: {train_df['doc_id'].nunique()}, Clauses: {len(train_df)}")
+    # logger.info(f"Test docs: {test_df["doc_id"].nunique()}, Clauses: {len(test_df)}")
+    # logger.info(f"Train docs: {val_df["doc_id"].nunique()}, Clauses: {len(val_df)}")
 
     return train_df, test_df, val_df

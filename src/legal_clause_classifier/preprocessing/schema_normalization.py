@@ -6,7 +6,8 @@ import logging
 
 from src.legal_clause_classifier.utils.logger import get_logger
 
-logger = get_logger("preprocessing", "preprocessing.log")
+logger = get_logger("preprocessing")
+run_id = logger.run_id
 
 
 def load_dataset(file_path: str) -> dict:
