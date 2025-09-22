@@ -43,5 +43,7 @@ TOKENIZED_VAL = os.path.join(ARTIFACTS_DIR, "val_tokenized")
 TOKENIZED_TEST = os.path.join(ARTIFACTS_DIR, "test_tokenized")
 
 # Logistic Regression Model
+LR_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "logistic_model.pkl")
 
-LR_MODEL_SAVE_PATH = os.path.join(ARTIFACTS_DIR, "logistic_model.pkl")
+# ANN Model
+ANN_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "ann_baseline.pt")

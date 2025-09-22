@@ -1,6 +1,6 @@
 import joblib
 from sklearn.linear_model import LogisticRegression
-from sklearn.multiclass import OneVsOneClassifier
+from sklearn.multiclass import OneVsRestClassifier
 
 
 def logistic_regression_model(C=1.0, max_iter=5000, n_jobs=-1):
@@ -11,7 +11,7 @@ def logistic_regression_model(C=1.0, max_iter=5000, n_jobs=-1):
         solver="liblinear",  # "saga" works too for larger data
         n_jobs=n_jobs
     )
-    model = OneVsOneClassifier(base_clf, n_jobs=n_jobs)
+    model = OneVsRestClassifier(base_clf, n_jobs=n_jobs)
     return model
 
 

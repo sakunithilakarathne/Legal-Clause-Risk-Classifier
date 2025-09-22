@@ -9,7 +9,7 @@ from config import(
     ARTIFACTS_DIR,
     Y_TRAIN_PATH, Y_VAL_PATH,
     X_TRAIN_TFIDF_PATH, X_VAL_TFIDF_PATH,
-    LR_MODEL_SAVE_PATH)
+    LR_MODEL_PATH)
 
 
 # Configure logging
@@ -26,7 +26,7 @@ def load_data():
     return X_train, X_val, y_train, y_val
 
 
-def train_logistic():
+def train_logistic_regression_model():
     logger.info("Loading data...")
     X_train, X_val, y_train, y_val = load_data()
 
@@ -44,6 +44,6 @@ def train_logistic():
     logger.info(f"Validation F1-micro: {f1_micro:.4f}, F1-macro: {f1_macro:.4f}")
     print(f"Validation F1-micro: {f1_micro:.4f}, F1-macro: {f1_macro:.4f}")
 
-    logger.info(f"Saving model to {LR_MODEL_SAVE_PATH}")
-    save_model(model, LR_MODEL_SAVE_PATH)
+    logger.info(f"Saving model to {LR_MODEL_PATH}")
+    save_model(model, LR_MODEL_PATH)
 
