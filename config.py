@@ -41,3 +41,9 @@ X_TEST_TFIDF_PATH = os.path.join(ARTIFACTS_DIR, "X_test_tfidf.npz")
 TOKENIZED_TRAIN = os.path.join(ARTIFACTS_DIR, "train_tokenized")
 TOKENIZED_VAL = os.path.join(ARTIFACTS_DIR, "val_tokenized")
 TOKENIZED_TEST = os.path.join(ARTIFACTS_DIR, "test_tokenized")
+
+# Logistic Regression Model
+LR_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "logistic_model.pkl")
+
+# ANN Model
+ANN_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "ann_baseline.pt")
