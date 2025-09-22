@@ -210,7 +210,7 @@ __marimo__/
 *.parquet
 *.csv
 *.json
-*.pkl
+#*.pkl
 *.pt
 *.log
 .cache/
@@ -218,4 +218,4 @@ __marimo__/
 .idea/
 
 # Ignore artifacts folder (models, outputs, etc)
-artifacts/
+#artifacts/
