@@ -5,14 +5,14 @@ import scipy.sparse as sp
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.metrics import f1_score, average_precision_score
 
-from legal_clause_classifier.models.tfidf_ann import ANNClassifier
-from utils import (
+from src.legal_clause_classifier.models.tfidf_ann import ANNClassifier
+from config import (
     ARTIFACTS_DIR, 
     X_TEST_TFIDF_PATH, Y_TEST_PATH,
     ANN_MODEL_PATH
 )
 
-def main():
+def test_tfidf_ann_model():
     X_test = sp.load_npz(X_TEST_TFIDF_PATH)
     X_test = torch.tensor(X_test.toarray(), dtype=torch.float32)
     
