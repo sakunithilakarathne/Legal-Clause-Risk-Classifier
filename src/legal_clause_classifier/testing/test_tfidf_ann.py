@@ -1,19 +1,21 @@
 import os
 import numpy as np
 import torch
+import scipy.sparse as sp
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.metrics import f1_score, average_precision_score
 
-from legal_clause_classifier.models.model_ann import ANNClassifier
-from legal_clause_classifier.utils.paths import (
+from legal_clause_classifier.models.tfidf_ann import ANNClassifier
+from utils import (
     ARTIFACTS_DIR, 
-    X_TEST_TFIDF_PATH, Y_TEST_PATH
+    X_TEST_TFIDF_PATH, Y_TEST_PATH,
+    ANN_MODEL_PATH
 )
 
-MODEL_PATH = os.path.join(ARTIFACTS_DIR, "ann_baseline.pt")
-
 def main():
-    X_test = torch.from_numpy(np.load(X_TEST_TFIDF_PATH, allow_pickle=False)["X"].toarray()).float()
+    X_test = sp.load_npz(X_TEST_TFIDF_PATH)
+    X_test = torch.tensor(X_test.toarray(), dtype=torch.float32)
+    
     y_test = torch.from_numpy(np.load(Y_TEST_PATH)).float()
 
     test_loader = DataLoader(TensorDataset(X_test, y_test), batch_size=64, shuffle=False)
@@ -22,7 +24,7 @@ def main():
     output_dim = y_test.shape[1]
 
     model = ANNClassifier(input_dim=input_dim, hidden_dim=256, output_dim=output_dim)
-    model.load_state_dict(torch.load(MODEL_PATH, map_location="cpu"))
+    model.load_state_dict(torch.load(ANN_MODEL_PATH, map_location="cpu"))
     model.eval()
 
     preds, labels = [], []
