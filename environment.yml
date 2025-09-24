@@ -1,0 +1,26 @@
+name: legal-clause-classifier
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - numpy
+  - pandas
+  - scipy
+  - scikit-learn
+  - matplotlib
+  - seaborn
+  - tqdm
+  - joblib
+  - spacy
+  - optuna
+  - pip
+  - pip:
+      - torch
+      - torchvision
+      - torchaudio
+      - transformers
+      - datasets
+      - evaluate
+      - scikit-multilearn
+      - pyarrow
