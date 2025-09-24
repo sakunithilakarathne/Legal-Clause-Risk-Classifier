@@ -47,3 +47,6 @@ LR_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "logistic_model.pkl")
 
 # ANN Model
 ANN_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "ann_baseline.pt")
+
+# Advanced ANN Model
+ADVANCED_ANN_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "advanced_ann.pt")
