@@ -211,7 +211,7 @@ __marimo__/
 *.csv
 *.json
 #*.pkl
-*.pt
+#*.pt
 *.log
 .cache/
 # Ignore JetBrains IDE config folder

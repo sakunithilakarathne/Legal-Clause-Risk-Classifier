@@ -30,12 +30,8 @@ def load_data():
     X_train = torch.tensor(X_train.toarray(), dtype=torch.float32)
     X_val = torch.tensor(X_val.toarray(), dtype=torch.float32)
 
-
     y_train = torch.from_numpy(np.load(Y_TRAIN_PATH)).float()
     y_val = torch.from_numpy(np.load(Y_VAL_PATH)).float()
-
-        # y_train = torch.tensor(np.load(Y_TRAIN_PATH), dtype=torch.float32)
-    # y_val = torch.tensor(np.load(Y_VAL_PATH), dtype=torch.float32)
 
     train_loader = DataLoader(TensorDataset(X_train, y_train), batch_size=BATCH_SIZE, shuffle=True)
     val_loader = DataLoader(TensorDataset(X_val, y_val), batch_size=BATCH_SIZE, shuffle=False)
