@@ -7,14 +7,14 @@ from transformers import AutoTokenizer
 import torch
 from datasets import Dataset
 import logging
-from spicy import sparse
+from scipy import sparse
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from collections import Counter
 import nltk
 nltk.download('punkt')
+nltk.download('punkt_tab')
 from nltk.tokenize import word_tokenize
-from torchtext.vocab import Vocab
 import pickle
 
 from src.legal_clause_classifier.utils.logger import get_logger
@@ -108,41 +108,85 @@ def tfidf_vectorization(train_df, val_df, test_df):
 
 
 
+# def lstm_tokenization(train_df, val_df, test_df):
+#     MAX_LEN = 256  # pad/truncate length
+
+#     def build_vocab(texts, min_freq=2):
+#         counter = Counter()
+#         for text in texts:
+#             tokens = word_tokenize(text.lower())
+#             counter.update(tokens)
+#         return Vocab(counter, min_freq=min_freq, specials=['<unk>', '<pad>'])
+
+#     def encode_text(text, vocab, max_len=MAX_LEN):
+#         tokens = word_tokenize(text.lower())
+#         ids = [vocab[token] for token in tokens[:max_len]]
+#         if len(ids) < max_len:
+#             ids += [vocab['<pad>']] * (max_len - len(ids))
+#         return np.array(ids)
+
+#     # Build vocab from train only
+#     vocab = build_vocab(train_df["clause_text"].tolist(), min_freq=2)
+#     with open(LSTM_VOCAB_PATH, "wb") as f:
+#         pickle.dump(vocab, f)
+
+#     # Encode datasets
+#     train_ids = np.stack([encode_text(t, vocab) for t in train_df["clause_text"]])
+#     np.save(LSTM_TOKENIZED_TRAIN, train_ids)
+#     logger.info("Saved Tokenized train dataset.")
+#     test_ids = np.stack([encode_text(t, vocab) for t in test_df["clause_text"]])
+#     np.save(LSTM_TOKENIZED_TEST, test_ids)
+#     logger.info("Saved Tokenized test dataset.")
+#     val_ids = np.stack([encode_text(t, vocab) for t in val_df["clause_text"]])
+#     np.save(LSTM_TOKENIZED_VAL, val_ids)
+#     logger.info("Saved Tokenized validation dataset.")
+
+
+
 def lstm_tokenization(train_df, val_df, test_df):
     MAX_LEN = 256  # pad/truncate length
+    UNK_TOKEN = "<unk>"
+    PAD_TOKEN = "<pad>"
+
 
     def build_vocab(texts, min_freq=2):
         counter = Counter()
         for text in texts:
             tokens = word_tokenize(text.lower())
             counter.update(tokens)
-        return Vocab(counter, min_freq=min_freq, specials=['<unk>', '<pad>'])
+
+        # Start vocab with special tokens
+        vocab = {PAD_TOKEN: 0, UNK_TOKEN: 1}
+        idx = 2
+        for token, freq in counter.items():
+            if freq >= min_freq:
+                vocab[token] = idx
+                idx += 1
+        return vocab
 
     def encode_text(text, vocab, max_len=MAX_LEN):
         tokens = word_tokenize(text.lower())
-        ids = [vocab[token] for token in tokens[:max_len]]
+        ids = [vocab.get(token, vocab[UNK_TOKEN]) for token in tokens[:max_len]]
         if len(ids) < max_len:
-            ids += [vocab['<pad>']] * (max_len - len(ids))
+            ids += [vocab[PAD_TOKEN]] * (max_len - len(ids))
         return np.array(ids)
 
-    # Build vocab from train only
+    # Build vocab from training set only
     vocab = build_vocab(train_df["clause_text"].tolist(), min_freq=2)
+
+    # Save vocab for reuse
     with open(LSTM_VOCAB_PATH, "wb") as f:
         pickle.dump(vocab, f)
 
-    # Encode datasets
+    # Encode splits
     train_ids = np.stack([encode_text(t, vocab) for t in train_df["clause_text"]])
-    np.save(LSTM_TOKENIZED_TRAIN, train_ids)
-    logger.info("Saved Tokenized train dataset.")
-    test_ids = np.stack([encode_text(t, vocab) for t in test_df["clause_text"]])
-    np.save(LSTM_TOKENIZED_TEST, test_ids)
-    logger.info("Saved Tokenized test dataset.")
     val_ids = np.stack([encode_text(t, vocab) for t in val_df["clause_text"]])
+    test_ids = np.stack([encode_text(t, vocab) for t in test_df["clause_text"]])
+
+    # Save encoded arrays
+    np.save(LSTM_TOKENIZED_TRAIN, train_ids)
     np.save(LSTM_TOKENIZED_VAL, val_ids)
-    logger.info("Saved Tokenized validation dataset.")
-
-
-
+    np.save(LSTM_TOKENIZED_TEST, test_ids)
 
 
 def transformer_tokenization(train_df, test_df, val_df):
