@@ -6,10 +6,9 @@ import torch.optim as optim
 import scipy.sparse as sp
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.metrics import f1_score, average_precision_score
-
+import wandb
 from ..models.tfidf_ann import ANNClassifier
 from config import (
-    ARTIFACTS_DIR, 
     X_TRAIN_TFIDF_PATH, X_VAL_TFIDF_PATH,
     Y_TRAIN_PATH, Y_VAL_PATH,
     ANN_MODEL_PATH
@@ -57,6 +56,20 @@ def evaluate(model, loader, device):
 
 
 def train_tfidf_ann_model():
+
+     # Initialize wandb
+    wandb.init(
+        project="legal-clause-classifier",  
+        name="tfidf_ann_v1",  
+        config={
+            "batch_size": BATCH_SIZE,
+            "epochs": EPOCHS,
+            "learning_rate": LEARNING_RATE,
+            "hidden_dim": HIDDEN_DIM,
+            "model": "ANNClassifier"
+        }
+    )
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     train_loader, val_loader, input_dim, output_dim = load_data()
 
@@ -66,6 +79,7 @@ def train_tfidf_ann_model():
 
     for epoch in range(EPOCHS):
         model.train()
+        total_loss = 0
         for X_batch, y_batch in train_loader:
             X_batch, y_batch = X_batch.to(device), y_batch.to(device)
             optimizer.zero_grad()
@@ -73,11 +87,23 @@ def train_tfidf_ann_model():
             loss = criterion(outputs, y_batch)
             loss.backward()
             optimizer.step()
+            total_loss += loss.item()
 
         # validation
         micro_f1, macro_f1, pr_auc = evaluate(model, val_loader, device)
-        print(f"Epoch {epoch+1}/{EPOCHS} | Micro-F1: {micro_f1:.4f} | Macro-F1: {macro_f1:.4f} | PR-AUC: {pr_auc:.4f}")
+        print(f"Epoch {epoch+1}/{EPOCHS} | Loss: {total_loss:.4f} | Micro-F1: {micro_f1:.4f} | Macro-F1: {macro_f1:.4f} | PR-AUC: {pr_auc:.4f}")
+
+        # Log metrics to wandb
+        wandb.log({
+            "epoch": epoch + 1,
+            "loss": total_loss,
+            "micro_f1": micro_f1,
+            "macro_f1": macro_f1,
+            "pr_auc": pr_auc
+        })
 
     torch.save(model.state_dict(), ANN_MODEL_PATH)
     print(f"Model saved at {ANN_MODEL_PATH}")
+
+    wandb.finish()
 
