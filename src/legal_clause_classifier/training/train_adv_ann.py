@@ -91,7 +91,7 @@ def train_advanced_ann_model():
         if micro_f1 > best_val_f1:
             best_val_f1 = micro_f1
             torch.save(model.state_dict(), ADVANCED_ANN_MODEL_PATH)
-            print(f"✅ Saved new best model (micro_f1={micro_f1:.4f})")
+            print(f"✅ Saved new best model (micro_f1={micro_f1:.4f}) to {ADVANCED_ANN_MODEL_PATH}")
 
 
 
