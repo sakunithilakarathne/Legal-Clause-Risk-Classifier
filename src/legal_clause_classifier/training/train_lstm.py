@@ -6,8 +6,8 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 import numpy as np
 from sklearn.metrics import f1_score, average_precision_score
-
 from src.legal_clause_classifier.models.lstm import LSTMClassifier
+import wandb
 from config import (
     Y_TRAIN_PATH, Y_VAL_PATH,
     LSTM_TOKENIZED_TRAIN, LSTM_TOKENIZED_VAL,
@@ -66,6 +66,20 @@ def evaluate_epoch(model, val_loader, device):
 # --- Training ---
 def train_lstm_model():
 
+    # Initialize wandb
+    wandb.init(
+        project="legal-clause-classifier",  
+        name="lstm_v1",  
+        config={
+            "batch_size": 32,
+            "epochs": 10,
+            "learning_rate": 1e-3,
+            "embed_dim": 128,
+            "hidden_dim": 256,
+            "model": "LSTMClassifier"
+        }
+    )
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     with open(LSTM_VOCAB_PATH, "rb") as f:
@@ -89,8 +103,19 @@ def train_lstm_model():
         loss = train_epoch(model, train_loader, device, optimizer, criterion)
         micro, macro, prauc = evaluate_epoch(model, val_loader, device)
 
+        # Log metrics to wandb
+        wandb.log({
+            "epoch": epoch + 1,
+            "loss": loss,
+            "micro_f1": micro,
+            "macro_f1": macro,
+            "pr_auc": prauc
+        })
+
         print(f"Epoch {epoch+1} | Loss: {loss} "
               f"| Micro-F1: {micro:.4f} | Macro-F1: {macro:.4f} | PR-AUC: {prauc:.4f}")
 
     torch.save(model.state_dict(), LSTM_MODEL_PATH)
+
+    wandb.finish()
 

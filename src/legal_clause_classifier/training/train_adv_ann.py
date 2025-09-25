@@ -12,6 +12,7 @@ from config import (
     X_VAL_TFIDF_PATH, Y_VAL_PATH
 )
 
+import wandb
 
 TRAIN_BATCH_SIZE = 64
 VAL_BATCH_SIZE = 128
@@ -61,6 +62,21 @@ def model_evaluate(model, val_loader, device):
 
 
 def train_advanced_ann_model():
+    # ✅ Initialize wandb
+
+    wandb.init(
+        project="legal-clause-classifier",  
+        name="tfidf_ann_v1",
+        config={
+            "train_batch_size": TRAIN_BATCH_SIZE,
+            "val_batch_size": VAL_BATCH_SIZE,
+            "epochs": EPOCHS,
+            "learning_rate": 1e-3,
+            "loss": "FocalLoss",
+            "model": "TfidfANNAdvanced"
+         }
+    )
+
     train_loader, val_loader, input_dim, num_labels = load_data()
 
     # Model setup
@@ -71,9 +87,8 @@ def train_advanced_ann_model():
     # Training loop
     device = "cuda" if torch.cuda.is_available() else "cpu"
     best_val_f1 = BEST_VAL_F1
-    epochs = EPOCHS
 
-    for epoch in range(epochs):
+    for epoch in range(EPOCHS):
         model.train()
         total_loss = 0
         for xb, yb in train_loader:
@@ -86,15 +101,23 @@ def train_advanced_ann_model():
             total_loss += loss.item()
 
         micro_f1, macro_f1, pr_auc = model_evaluate(model, val_loader, device)
-        print(f"Epoch {epoch+1}/{epochs} | Loss {total_loss:.4f} | Micro-F1 {micro_f1:.4f} | Macro-F1 {macro_f1:.4f} | PR-AUC {pr_auc:.4f}")
+        print(f"Epoch {epoch+1}/{EPOCHS} | Loss {total_loss:.4f} | Micro-F1 {micro_f1:.4f} | Macro-F1 {macro_f1:.4f} | PR-AUC {pr_auc:.4f}")
+
+        # ✅ Log metrics to wandb
+        wandb.log({
+            "epoch": epoch + 1,
+            "loss": total_loss,
+            "micro_f1": micro_f1,
+            "macro_f1": macro_f1,
+            "pr_auc": pr_auc
+        })
 
         if micro_f1 > best_val_f1:
             best_val_f1 = micro_f1
             torch.save(model.state_dict(), ADVANCED_ANN_MODEL_PATH)
             print(f"✅ Saved new best model (micro_f1={micro_f1:.4f}) to {ADVANCED_ANN_MODEL_PATH}")
 
-
-
+    wandb.finish()
 
 
 

@@ -8,7 +8,7 @@ def logistic_regression_model(C=1.0, max_iter=5000, n_jobs=-1):
     base_clf = LogisticRegression(
         C=C,
         max_iter=max_iter,
-        solver="liblinear",  # "saga" works too for larger data
+        solver="saga",  # "saga" works too for larger data
         n_jobs=n_jobs
     )
     model = OneVsRestClassifier(base_clf, n_jobs=n_jobs)
