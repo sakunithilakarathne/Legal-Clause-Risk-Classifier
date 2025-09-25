@@ -64,3 +64,6 @@ ADVANCED_ANN_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "advanced_ann.pt")
 
 # LSTM MODEL
 LSTM_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "lstm_model.pt")
+
+# Legal Bert Model
+LEGAL_BERT_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "legal_bert_model.pt")

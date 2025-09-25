@@ -209,7 +209,7 @@ __marimo__/
 
 *.parquet
 *.csv
-*.json
+#*.json
 #*.pkl
 #*.pt
 *.log
@@ -219,3 +219,7 @@ __marimo__/
 
 # Ignore artifacts folder (models, outputs, etc)
 #artifacts/
+
+# Ignore Notebooks/datasets folder
+Notebooks/datasets
+.vscode
