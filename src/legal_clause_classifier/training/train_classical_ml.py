@@ -58,6 +58,7 @@ def train_logistic_regression_model():
     logger.info(f"Validation F1-micro: {f1_micro:.4f}, F1-macro: {f1_macro:.4f}")
     print(f"Validation F1-micro: {f1_micro:.4f}, F1-macro: {f1_macro:.4f}")
 
+    # Log metrics to wandb
     wandb.log({
         "f1_micro": f1_micro,
         "f1_macro": f1_macro

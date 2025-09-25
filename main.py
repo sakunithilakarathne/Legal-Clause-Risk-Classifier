@@ -16,23 +16,23 @@ from src.legal_clause_classifier.testing.test_legalbert import test_legalbert_mo
 
 def main():
     
-    raw_data = load_dataset(RAW_DATASET_PATH)
-    preprocessing_pipeline(raw_data)
+    # raw_data = load_dataset(RAW_DATASET_PATH)
+    # preprocessing_pipeline(raw_data)
 
     train_logistic_regression_model()
     test_logistic_ml_model()
     
-    train_tfidf_ann_model()
-    test_tfidf_ann_model()
+    # train_tfidf_ann_model()
+    # test_tfidf_ann_model()
 
-    train_advanced_ann_model()
-    test_advanced_ann_model()
+    # train_advanced_ann_model()
+    # test_advanced_ann_model()
 
-    train_lstm_model()
-    test_lstm_model()
+    # train_lstm_model()
+    # test_lstm_model()
 
-    train_legalbert_model()
-    test_legalbert_model()
+    # train_legalbert_model()
+    # test_legalbert_model()
 
 
 

@@ -72,7 +72,7 @@ def train_lstm_model():
         name="lstm_v1",  
         config={
             "batch_size": 32,
-            "epochs": 10,
+            "epochs": 15,
             "learning_rate": 1e-3,
             "embed_dim": 128,
             "hidden_dim": 256,
@@ -107,8 +107,8 @@ def train_lstm_model():
         wandb.log({
             "epoch": epoch + 1,
             "loss": loss,
-            "micro_f1": micro,
-            "macro_f1": macro,
+            "f1_micro": micro,
+            "f1_macro": macro,
             "pr_auc": prauc
         })
 
