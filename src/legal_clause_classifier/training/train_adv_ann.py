@@ -62,7 +62,7 @@ def model_evaluate(model, val_loader, device):
 
 
 def train_advanced_ann_model():
-    # ✅ Initialize wandb
+    # Initialize wandb
 
     wandb.init(
         project="legal-clause-classifier",  
@@ -103,7 +103,7 @@ def train_advanced_ann_model():
         micro_f1, macro_f1, pr_auc = model_evaluate(model, val_loader, device)
         print(f"Epoch {epoch+1}/{EPOCHS} | Loss {total_loss:.4f} | Micro-F1 {micro_f1:.4f} | Macro-F1 {macro_f1:.4f} | PR-AUC {pr_auc:.4f}")
 
-        # ✅ Log metrics to wandb
+        # Log metrics to wandb
         wandb.log({
             "epoch": epoch + 1,
             "loss": total_loss,
