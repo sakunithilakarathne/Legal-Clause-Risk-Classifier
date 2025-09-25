@@ -51,11 +51,9 @@ def preprocessing_pipeline(json_file: json):
 
 
 
-    X_train_tfidf, X_test_tfidf, X_val_tfidf = tfidf_vectorization(train_df, val_df, test_df)
-
-    train_tokenized, val_tokenized, test_tokenized = transformer_tokenization(train_df, test_df, val_df)
+    tfidf_vectorization(train_df, val_df, test_df)
+    lstm_tokenization(train_df, val_df, test_df)
+    transformer_tokenization(train_df, test_df, val_df)
 
     
-    return X_train_tfidf, X_test_tfidf, X_val_tfidf, train_tokenized, val_tokenized, test_tokenized
-
 
