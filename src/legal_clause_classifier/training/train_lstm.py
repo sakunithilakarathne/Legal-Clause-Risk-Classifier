@@ -83,10 +83,10 @@ def train_lstm_model():
     model = LSTMClassifier(vocab_size, embed_dim=128, hidden_dim=256, num_labels=num_labels).to(device)
 
     criterion = nn.BCEWithLogitsLoss()
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = torch.optim.Adam(model.parameters(),lr=1e-3)#optim.Adam(model.parameters(), lr=1e-3)
 
     for epoch in range(10):
-        loss = train_epoch(model, train_loader, device, criterion, optimizer)
+        loss = train_epoch(model, train_loader, device, optimizer, criterion)
         micro, macro, prauc = evaluate_epoch(model, val_loader, device)
 
         print(f"Epoch {epoch+1} | Loss: {loss} "
