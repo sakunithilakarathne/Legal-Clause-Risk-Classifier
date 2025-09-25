@@ -97,8 +97,8 @@ def train_tfidf_ann_model():
         wandb.log({
             "epoch": epoch + 1,
             "loss": total_loss,
-            "micro_f1": micro_f1,
-            "macro_f1": macro_f1,
+            "f1_micro": micro_f1,
+            "f1_macro": macro_f1,
             "pr_auc": pr_auc
         })
 

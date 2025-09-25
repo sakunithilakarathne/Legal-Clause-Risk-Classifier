@@ -69,8 +69,8 @@ def train_legalbert_model():
         pr_auc = average_precision_score(labels, preds, average="micro")
 
         return {
-            "micro_f1": micro_f1,
-            "macro_f1": macro_f1,
+            "f1_micro": micro_f1,
+            "f1_macro": macro_f1,
             "pr_auc": pr_auc
         }
 
