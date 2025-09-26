@@ -17,6 +17,8 @@ from config import (
     LABEL_LIST_PATH, LEGAL_BERT_MODEL_PATH
 )
 import json
+from datasets import Value
+from transformers import Trainer, TrainingArguments, default_data_collator
 
 
 
@@ -30,20 +32,26 @@ LOGGING_STEPS = 50
 SAVE_STEPS = 500
 EVAL_STEPS = 500
 
-# -------------------- Load Data --------------------
+
+
 def load_data():
     train_ds = load_from_disk(TOKENIZED_TRAIN)
     val_ds = load_from_disk(TOKENIZED_VAL)
     test_ds = load_from_disk(TOKENIZED_TEST)
 
-    y_train = np.load(Y_TRAIN_PATH, allow_pickle=True).astype("float32")  # <-- convert to float
+    y_train = np.load(Y_TRAIN_PATH, allow_pickle=True).astype("float32")
     y_val = np.load(Y_VAL_PATH, allow_pickle=True).astype("float32")
     y_test = np.load(Y_TEST_PATH, allow_pickle=True).astype("float32")
 
-    # Add labels back into HuggingFace datasets
-    train_ds = train_ds.add_column("labels", y_train.tolist())
-    val_ds = val_ds.add_column("labels", y_val.tolist())
-    test_ds = test_ds.add_column("labels", y_test.tolist())
+    # Add labels
+    train_ds = train_ds.add_column("labels", list(y_train))
+    val_ds = val_ds.add_column("labels", list(y_val))
+    test_ds = test_ds.add_column("labels", list(y_test))
+
+    # Force correct dtype
+    train_ds = train_ds.cast_column("labels", Value("float32"))
+    val_ds = val_ds.cast_column("labels", Value("float32"))
+    test_ds = test_ds.cast_column("labels", Value("float32"))
 
     return train_ds, val_ds, test_ds
 
@@ -69,9 +77,22 @@ def compute_metrics(eval_pred):
         "accuracy": subset_acc,
     }
 
+# -------------------- Custom Collator --------------------
+def float_data_collator(features):
+    batch = default_data_collator(features)
+    if "labels" in batch:
+        batch["labels"] = batch["labels"].float()  # force float32 for BCEWithLogitsLoss
+        # Debug: print dtype only once
+        if not hasattr(float_data_collator, "printed"):
+            print(f"[DEBUG] Collator labels dtype: {batch['labels'].dtype}")
+            float_data_collator.printed = True
+    return batch
+
+
+
+
 # -------------------- Training --------------------
 def train_legalbert_model():
-    
     # Initialize WandB
     wandb.init(
         project="legal-clause-classifier",  
@@ -93,7 +114,6 @@ def train_legalbert_model():
 
     model = get_legalbert_model(num_labels=len(label_list))
 
-    # Training parameters
     training_args = TrainingArguments(
         output_dir=os.path.join(ARTIFACTS_DIR, "legalbert_outputs"),
         eval_strategy="epoch",
@@ -117,7 +137,8 @@ def train_legalbert_model():
         args=training_args,
         train_dataset=train_ds,
         eval_dataset=val_ds,
-        compute_metrics=compute_metrics
+        compute_metrics=compute_metrics,
+        data_collator=float_data_collator,  # <-- ensure float labels
     )
 
     trainer.train()
@@ -127,12 +148,88 @@ def train_legalbert_model():
     # print("Test Results:", test_results)
 
     trainer.save_model(LEGAL_BERT_MODEL_PATH)
-    print(
-        f"Model saved at {LEGAL_BERT_MODEL_PATH}")
+    print(f"Model saved at {LEGAL_BERT_MODEL_PATH}")
 
     wandb.finish()
 
-# # ==== Training Parameters (easy to tune) ====
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# # -------------------- Training --------------------
+# def train_legalbert_model():
+    
+#     # Initialize WandB
+#     wandb.init(
+#         project="legal-clause-classifier",  
+#         name="legal-bert-v2", 
+#         config={
+#             "epochs": EPOCHS,
+#             "batch_size": BATCH_SIZE,
+#             "learning_rate": LEARNING_RATE,
+#             "weight_decay": WEIGHT_DECAY,
+#             "warmup_ratio": WARMUP_RATIO,
+#         }
+#     )
+
+#     train_ds, val_ds, test_ds = load_data()
+
+#     # Load label list for num_labels
+#     with open(LABEL_LIST_PATH, "r") as f:
+#         label_list = json.load(f)
+
+#     model = get_legalbert_model(num_labels=len(label_list))
+
+#     # Training parameters
+#     training_args = TrainingArguments(
+#         output_dir=os.path.join(ARTIFACTS_DIR, "legalbert_outputs"),
+#         eval_strategy="epoch",
+#         save_strategy="epoch",
+#         learning_rate=LEARNING_RATE,
+#         per_device_train_batch_size=BATCH_SIZE,
+#         per_device_eval_batch_size=BATCH_SIZE,
+#         num_train_epochs=EPOCHS,
+#         weight_decay=WEIGHT_DECAY,
+#         logging_dir=os.path.join(ARTIFACTS_DIR, "logs"),
+#         logging_steps=LOGGING_STEPS,
+#         load_best_model_at_end=True,
+#         metric_for_best_model="micro_f1",
+#         greater_is_better=True,
+#         report_to="wandb",
+#         run_name="legal-bert-v2"
+#     )
+
+#     trainer = Trainer(
+#         model=model,
+#         args=training_args,
+#         train_dataset=train_ds,
+#         eval_dataset=val_ds,
+#         compute_metrics=compute_metrics
+#     )
+
+#     trainer.train()
+
+#     # Evaluate on test set
+#     # test_results = trainer.evaluate(test_ds)
+#     # print("Test Results:", test_results)
+
+#     trainer.save_model(LEGAL_BERT_MODEL_PATH)
+#     print(
+#         f"Model saved at {LEGAL_BERT_MODEL_PATH}")
+
+#     wandb.finish()
+
+# # # ==== Training Parameters (easy to tune) ====
 # BATCH_SIZE = 8
 # EPOCHS = 5
 # LEARNING_RATE = 2e-5
