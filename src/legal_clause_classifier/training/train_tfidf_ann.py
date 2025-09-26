@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 import scipy.sparse as sp
 from torch.utils.data import DataLoader, TensorDataset
-from sklearn.metrics import f1_score, average_precision_score
+from sklearn.metrics import f1_score, average_precision_score, accuracy_score
 import wandb
 from ..models.tfidf_ann import ANNClassifier
 from config import (
@@ -51,6 +51,8 @@ def evaluate(model, loader, device):
     micro_f1 = f1_score(labels, preds > 0.5, average="micro")
     macro_f1 = f1_score(labels, preds > 0.5, average="macro")
     pr_auc = average_precision_score(labels, preds, average="micro")
+    accuracy = accuracy_score(labels, preds > 0.5)
+
     return micro_f1, macro_f1, pr_auc
 
 
@@ -88,18 +90,19 @@ def train_tfidf_ann_model():
             loss.backward()
             optimizer.step()
             total_loss += loss.item()
+            loss = total_loss/ len (train_loader)
 
         # validation
-        micro_f1, macro_f1, pr_auc = evaluate(model, val_loader, device)
-        print(f"Epoch {epoch+1}/{EPOCHS} | Loss: {total_loss:.4f} | Micro-F1: {micro_f1:.4f} | Macro-F1: {macro_f1:.4f} | PR-AUC: {pr_auc:.4f}")
+        micro_f1, macro_f1, pr_auc, accuracy = evaluate(model, val_loader, device)
+        print(f"Epoch {epoch+1}/{EPOCHS} | Loss: {loss:.4f} | Micro-F1: {micro_f1:.4f} | Macro-F1: {macro_f1:.4f} | PR-AUC: {pr_auc:.4f}")
 
         # Log metrics to wandb
         wandb.log({
-            "epoch": epoch + 1,
-            "loss": total_loss,
+            "loss": loss,
             "f1_micro": micro_f1,
             "f1_macro": macro_f1,
-            "pr_auc": pr_auc
+            "pr_auc": pr_auc,
+            "accuracy": accuracy
         })
 
     torch.save(model.state_dict(), ANN_MODEL_PATH)
