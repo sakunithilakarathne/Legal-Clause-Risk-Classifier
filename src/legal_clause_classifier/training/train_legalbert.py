@@ -19,6 +19,7 @@ from config import (
 import json
 
 
+
 # ==== Training Parameters (easy to tune) ====
 BATCH_SIZE = 8
 EPOCHS = 5
@@ -29,16 +30,15 @@ LOGGING_STEPS = 50
 SAVE_STEPS = 500
 EVAL_STEPS = 500
 
-
 # -------------------- Load Data --------------------
 def load_data():
     train_ds = load_from_disk(TOKENIZED_TRAIN)
     val_ds = load_from_disk(TOKENIZED_VAL)
     test_ds = load_from_disk(TOKENIZED_TEST)
 
-    y_train = np.load(Y_TRAIN_PATH, allow_pickle=True)
-    y_val = np.load(Y_VAL_PATH, allow_pickle=True)
-    y_test = np.load(Y_TEST_PATH, allow_pickle=True)
+    y_train = np.load(Y_TRAIN_PATH, allow_pickle=True).astype("float32")  # <-- convert to float
+    y_val = np.load(Y_VAL_PATH, allow_pickle=True).astype("float32")
+    y_test = np.load(Y_TEST_PATH, allow_pickle=True).astype("float32")
 
     # Add labels back into HuggingFace datasets
     train_ds = train_ds.add_column("labels", y_train.tolist())
@@ -47,19 +47,19 @@ def load_data():
 
     return train_ds, val_ds, test_ds
 
-
+# -------------------- Metrics --------------------
 def compute_metrics(eval_pred):
     logits, labels = eval_pred
     preds = torch.sigmoid(torch.tensor(logits))  # multi-label → sigmoid
     preds = (preds > 0.5).int().numpy()
-    labels = labels.astype(int)
+    labels = labels.astype(float)  # <-- ensure labels are float for multi-label metrics
 
     # Metrics
     micro_f1 = f1_score(labels, preds, average="micro", zero_division=0)
     macro_f1 = f1_score(labels, preds, average="macro", zero_division=0)
     pr_auc = average_precision_score(labels, preds, average="micro")
 
-    # Accuracy (multi-label: exact match ratio OR subset accuracy)
+    # Accuracy (multi-label: exact match ratio / subset accuracy)
     subset_acc = accuracy_score(labels, preds)
 
     return {
@@ -69,11 +69,10 @@ def compute_metrics(eval_pred):
         "accuracy": subset_acc,
     }
 
-
 # -------------------- Training --------------------
 def train_legalbert_model():
     
-    #Initialize WandB
+    # Initialize WandB
     wandb.init(
         project="legal-clause-classifier",  
         name="legal-bert-v2", 
@@ -94,22 +93,21 @@ def train_legalbert_model():
 
     model = get_legalbert_model(num_labels=len(label_list))
 
-    # Training parameters (easy to tweak later)
+    # Training parameters
     training_args = TrainingArguments(
         output_dir=os.path.join(ARTIFACTS_DIR, "legalbert_outputs"),
         eval_strategy="epoch",
         save_strategy="epoch",
-        learning_rate=LEARNING_RATE ,
-        per_device_train_batch_size=BATCH_SIZE, 
+        learning_rate=LEARNING_RATE,
+        per_device_train_batch_size=BATCH_SIZE,
         per_device_eval_batch_size=BATCH_SIZE,
-        num_train_epochs= EPOCHS,
-        weight_decay= WEIGHT_DECAY,
+        num_train_epochs=EPOCHS,
+        weight_decay=WEIGHT_DECAY,
         logging_dir=os.path.join(ARTIFACTS_DIR, "logs"),
-        logging_steps= LOGGING_STEPS,
+        logging_steps=LOGGING_STEPS,
         load_best_model_at_end=True,
         metric_for_best_model="micro_f1",
         greater_is_better=True,
-
         report_to="wandb",
         run_name="legal-bert-v2"
     )
@@ -129,9 +127,124 @@ def train_legalbert_model():
     # print("Test Results:", test_results)
 
     trainer.save_model(LEGAL_BERT_MODEL_PATH)
-    print(f"Model saved at {LEGAL_BERT_MODEL_PATH}")
+    print(
+        f"Model saved at {LEGAL_BERT_MODEL_PATH}")
 
     wandb.finish()
+
+# # ==== Training Parameters (easy to tune) ====
+# BATCH_SIZE = 8
+# EPOCHS = 5
+# LEARNING_RATE = 2e-5
+# WEIGHT_DECAY = 0.01
+# WARMUP_RATIO = 0.1
+# LOGGING_STEPS = 50
+# SAVE_STEPS = 500
+# EVAL_STEPS = 500
+
+
+# # -------------------- Load Data --------------------
+# def load_data():
+#     train_ds = load_from_disk(TOKENIZED_TRAIN)
+#     val_ds = load_from_disk(TOKENIZED_VAL)
+#     test_ds = load_from_disk(TOKENIZED_TEST)
+
+#     y_train = np.load(Y_TRAIN_PATH, allow_pickle=True)
+#     y_val = np.load(Y_VAL_PATH, allow_pickle=True)
+#     y_test = np.load(Y_TEST_PATH, allow_pickle=True)
+
+#     # Add labels back into HuggingFace datasets
+#     train_ds = train_ds.add_column("labels", y_train.tolist())
+#     val_ds = val_ds.add_column("labels", y_val.tolist())
+#     test_ds = test_ds.add_column("labels", y_test.tolist())
+
+#     return train_ds, val_ds, test_ds
+
+
+# def compute_metrics(eval_pred):
+#     logits, labels = eval_pred
+#     preds = torch.sigmoid(torch.tensor(logits))  # multi-label → sigmoid
+#     preds = (preds > 0.5).int().numpy()
+#     labels = labels.astype(int)
+
+#     # Metrics
+#     micro_f1 = f1_score(labels, preds, average="micro", zero_division=0)
+#     macro_f1 = f1_score(labels, preds, average="macro", zero_division=0)
+#     pr_auc = average_precision_score(labels, preds, average="micro")
+
+#     # Accuracy (multi-label: exact match ratio OR subset accuracy)
+#     subset_acc = accuracy_score(labels, preds)
+
+#     return {
+#         "micro_f1": micro_f1,
+#         "macro_f1": macro_f1,
+#         "pr_auc": pr_auc,
+#         "accuracy": subset_acc,
+#     }
+
+
+# # -------------------- Training --------------------
+# def train_legalbert_model():
+    
+#     #Initialize WandB
+#     wandb.init(
+#         project="legal-clause-classifier",  
+#         name="legal-bert-v2", 
+#         config={
+#             "epochs": EPOCHS,
+#             "batch_size": BATCH_SIZE,
+#             "learning_rate": LEARNING_RATE,
+#             "weight_decay": WEIGHT_DECAY,
+#             "warmup_ratio": WARMUP_RATIO,
+#         }
+#     )
+
+#     train_ds, val_ds, test_ds = load_data()
+
+#     # Load label list for num_labels
+#     with open(LABEL_LIST_PATH, "r") as f:
+#         label_list = json.load(f)
+
+#     model = get_legalbert_model(num_labels=len(label_list))
+
+#     # Training parameters (easy to tweak later)
+#     training_args = TrainingArguments(
+#         output_dir=os.path.join(ARTIFACTS_DIR, "legalbert_outputs"),
+#         eval_strategy="epoch",
+#         save_strategy="epoch",
+#         learning_rate=LEARNING_RATE ,
+#         per_device_train_batch_size=BATCH_SIZE, 
+#         per_device_eval_batch_size=BATCH_SIZE,
+#         num_train_epochs= EPOCHS,
+#         weight_decay= WEIGHT_DECAY,
+#         logging_dir=os.path.join(ARTIFACTS_DIR, "logs"),
+#         logging_steps= LOGGING_STEPS,
+#         load_best_model_at_end=True,
+#         metric_for_best_model="micro_f1",
+#         greater_is_better=True,
+
+#         report_to="wandb",
+#         run_name="legal-bert-v2"
+#     )
+
+#     trainer = Trainer(
+#         model=model,
+#         args=training_args,
+#         train_dataset=train_ds,
+#         eval_dataset=val_ds,
+#         compute_metrics=compute_metrics
+#     )
+
+#     trainer.train()
+
+#     # Evaluate on test set
+#     # test_results = trainer.evaluate(test_ds)
+#     # print("Test Results:", test_results)
+
+#     trainer.save_model(LEGAL_BERT_MODEL_PATH)
+#     print(f"Model saved at {LEGAL_BERT_MODEL_PATH}")
+
+#     wandb.finish()
 
     
     # import os
