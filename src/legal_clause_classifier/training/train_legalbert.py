@@ -19,8 +19,7 @@ from config import (
 import json
 from datasets import Value
 from transformers import Trainer, TrainingArguments, default_data_collator
-
-
+from datasets import load_from_disk, Sequence, Value
 
 # ==== Training Parameters (easy to tune) ====
 BATCH_SIZE = 8
@@ -34,26 +33,29 @@ EVAL_STEPS = 500
 
 
 
+
+
 def load_data():
     train_ds = load_from_disk(TOKENIZED_TRAIN)
     val_ds = load_from_disk(TOKENIZED_VAL)
     test_ds = load_from_disk(TOKENIZED_TEST)
 
     y_train = np.load(Y_TRAIN_PATH, allow_pickle=True).astype("float32")
-    y_val = np.load(Y_VAL_PATH, allow_pickle=True).astype("float32")
-    y_test = np.load(Y_TEST_PATH, allow_pickle=True).astype("float32")
+    y_val   = np.load(Y_VAL_PATH, allow_pickle=True).astype("float32")
+    y_test  = np.load(Y_TEST_PATH, allow_pickle=True).astype("float32")
 
-    # Add labels
+    # Add labels (multi-label → sequence of floats)
     train_ds = train_ds.add_column("labels", list(y_train))
-    val_ds = val_ds.add_column("labels", list(y_val))
-    test_ds = test_ds.add_column("labels", list(y_test))
+    val_ds   = val_ds.add_column("labels", list(y_val))
+    test_ds  = test_ds.add_column("labels", list(y_test))
 
-    # Force correct dtype
-    train_ds = train_ds.cast_column("labels", Value("float32"))
-    val_ds = val_ds.cast_column("labels", Value("float32"))
-    test_ds = test_ds.cast_column("labels", Value("float32"))
+    # Explicitly declare dtype as sequence of float32
+    train_ds = train_ds.cast_column("labels", Sequence(Value("float32")))
+    val_ds   = val_ds.cast_column("labels", Sequence(Value("float32")))
+    test_ds  = test_ds.cast_column("labels", Sequence(Value("float32")))
 
     return train_ds, val_ds, test_ds
+
 
 # -------------------- Metrics --------------------
 def compute_metrics(eval_pred):
