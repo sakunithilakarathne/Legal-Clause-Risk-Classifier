@@ -3,9 +3,10 @@ import numpy as np
 import torch
 from datasets import load_from_disk
 from transformers import Trainer, TrainingArguments
-from sklearn.metrics import f1_score, average_precision_score
+from sklearn.metrics import f1_score, average_precision_score, accuracy_score
 
 from src.legal_clause_classifier.models.legal_bert import LegalBERTClassifier
+from transformers import TrainingArguments
 from config import(
     TOKENIZED_TRAIN, TOKENIZED_VAL,
     Y_TRAIN_PATH, Y_VAL_PATH, LEGAL_BERT_MODEL_PATH
@@ -68,12 +69,22 @@ def train_legalbert_model():
         macro_f1 = f1_score(labels, preds > 0.5, average="macro")
         pr_auc = average_precision_score(labels, preds, average="micro")
 
+        # Calculate Accuracy
+        accuracy = accuracy_score(labels, preds > 0.5)
+
+        # Calculate Loss (using CrossEntropyLoss or another appropriate loss function)
+        loss_fn = torch.nn.BCEWithLogitsLoss()  # If using sigmoid + BCE for multi-label classification
+        loss = loss_fn(torch.tensor(logits), torch.tensor(labels)).item()
+
         return {
             "f1_micro": micro_f1,
             "f1_macro": macro_f1,
-            "pr_auc": pr_auc
+            "pr_auc": pr_auc,
+            "accuracy": accuracy,
+            "loss": loss
         }
-
+    
+    
     # ==== Training arguments ====
     training_args = TrainingArguments(
         output_dir=LEGAL_BERT_MODEL_PATH,

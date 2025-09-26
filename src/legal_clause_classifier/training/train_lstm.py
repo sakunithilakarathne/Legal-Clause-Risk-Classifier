@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 import numpy as np
-from sklearn.metrics import f1_score, average_precision_score
+from sklearn.metrics import f1_score, average_precision_score, accuracy_score
 from src.legal_clause_classifier.models.lstm import LSTMClassifier
 import wandb
 from config import (
@@ -59,8 +59,9 @@ def evaluate_epoch(model, val_loader, device):
     micro_f1 = f1_score(labels, preds > 0.5, average="micro")
     macro_f1 = f1_score(labels, preds > 0.5, average="macro")
     pr_auc = average_precision_score(labels, preds, average="micro")
+    accuracy = accuracy_score(labels, preds > 0.5)
 
-    return micro_f1, macro_f1, pr_auc
+    return micro_f1, macro_f1, pr_auc, accuracy
 
 
 # --- Training ---
@@ -99,21 +100,21 @@ def train_lstm_model():
     criterion = nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters(),lr=1e-3)#optim.Adam(model.parameters(), lr=1e-3)
 
-    for epoch in range(10):
+    for epoch in range(15):
         loss = train_epoch(model, train_loader, device, optimizer, criterion)
-        micro, macro, prauc = evaluate_epoch(model, val_loader, device)
+        micro, macro, prauc, accuracy = evaluate_epoch(model, val_loader, device)
 
         # Log metrics to wandb
         wandb.log({
-            "epoch": epoch + 1,
             "loss": loss,
             "f1_micro": micro,
             "f1_macro": macro,
-            "pr_auc": prauc
+            "pr_auc": prauc,
+            "accuracy": accuracy
         })
 
         print(f"Epoch {epoch+1} | Loss: {loss} "
-              f"| Micro-F1: {micro:.4f} | Macro-F1: {macro:.4f} | PR-AUC: {prauc:.4f}")
+              f"| Accuracy: {accuracy:.4f} | Micro-F1: {micro:.4f} | Macro-F1: {macro:.4f} | PR-AUC: {prauc:.4f}")
 
     torch.save(model.state_dict(), LSTM_MODEL_PATH)
 

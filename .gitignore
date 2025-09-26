@@ -223,3 +223,6 @@ __marimo__/
 # Ignore Notebooks/datasets folder
 Notebooks/datasets
 .vscode
+
+# Ignore wandb
+wandb

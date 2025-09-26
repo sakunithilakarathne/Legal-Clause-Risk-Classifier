@@ -3,7 +3,7 @@ import numpy as np
 import torch
 import torch.optim as optim
 from torch.utils.data import TensorDataset, DataLoader
-from sklearn.metrics import f1_score, average_precision_score
+from sklearn.metrics import f1_score, average_precision_score, accuracy_score
 import scipy.sparse as sp
 from src.legal_clause_classifier.models.advanced_ann import TfidfANNAdvanced, FocalLoss
 from config import (
@@ -57,7 +57,9 @@ def model_evaluate(model, val_loader, device):
     macro_f1 = f1_score(all_labels, all_preds > 0.5, average="macro")
     pr_auc = average_precision_score(all_labels, all_preds, average="micro")
 
-    return micro_f1, macro_f1, pr_auc
+    accuracy = accuracy_score(all_labels, all_preds > 0.5)
+
+    return micro_f1, macro_f1, pr_auc, accuracy
 
 
 
@@ -66,7 +68,7 @@ def train_advanced_ann_model():
 
     wandb.init(
         project="legal-clause-classifier",  
-        name="tfidf_ann_v1",
+        name="advanced_ann_v1",
         config={
             "train_batch_size": TRAIN_BATCH_SIZE,
             "val_batch_size": VAL_BATCH_SIZE,
@@ -99,17 +101,18 @@ def train_advanced_ann_model():
             loss.backward()
             optimizer.step()
             total_loss += loss.item()
+            loss = total_loss/len(train_loader)
 
-        micro_f1, macro_f1, pr_auc = model_evaluate(model, val_loader, device)
-        print(f"Epoch {epoch+1}/{EPOCHS} | Loss {total_loss:.4f} | Micro-F1 {micro_f1:.4f} | Macro-F1 {macro_f1:.4f} | PR-AUC {pr_auc:.4f}")
+        micro_f1, macro_f1, pr_auc, accuracy = model_evaluate(model, val_loader, device)
+        print(f"Epoch {epoch+1}/{EPOCHS} | Loss {loss:.4f} | Micro-F1 {micro_f1:.4f} | Macro-F1 {macro_f1:.4f} | PR-AUC {pr_auc:.4f}")
 
         # Log metrics to wandb
         wandb.log({
-            "epoch": epoch + 1,
-            "loss": total_loss,
+            "loss": loss,
             "f1_micro": micro_f1,
             "f1_macro": macro_f1,
-            "pr_auc": pr_auc
+            "pr_auc": pr_auc,
+            "accuracy": accuracy
         })
 
         if micro_f1 > best_val_f1:

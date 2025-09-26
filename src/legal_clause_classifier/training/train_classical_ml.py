@@ -2,9 +2,11 @@ import os
 import joblib
 import numpy as np
 import scipy.sparse as sp
-from sklearn.metrics import f1_score
-from ..models.classical_ml import *
-from ..utils.logger import get_logger
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import f1_score, accuracy_score, average_precision_score, log_loss
+import logging
+from src.legal_clause_classifier.models.classical_ml import logistic_regression_model
+from src.legal_clause_classifier.utils.logger import get_logger
 import wandb
 from config import(
     ARTIFACTS_DIR,
@@ -52,20 +54,30 @@ def train_logistic_regression_model():
 
     logger.info("Evaluating on validation set...")
 
+    y_val_pred_prob = model.predict_proba(X_val)
     y_val_pred = model.predict(X_val)
+
+    
     f1_micro = f1_score(y_val, y_val_pred, average="micro")
     f1_macro = f1_score(y_val, y_val_pred, average="macro")
-    logger.info(f"Validation F1-micro: {f1_micro:.4f}, F1-macro: {f1_macro:.4f}")
-    print(f"Validation F1-micro: {f1_micro:.4f}, F1-macro: {f1_macro:.4f}")
+    accuracy = accuracy_score(y_val, y_val_pred)
+    pr_auc = average_precision_score(y_val, y_val_pred_prob, average="micro", pos_label=1)  # for binary classification
+    loss = log_loss(y_val, y_val_pred_prob)
+
+    logger.info(f"Validation F1-micro: {f1_micro:.4f}, F1-macro: {f1_macro:.4f}, Accuracy: {accuracy:.4f}, PR AUC: {pr_auc:.4f}, Loss: {loss:.4f}")
+    print(f"Validation F1-micro: {f1_micro:.4f}, F1-macro: {f1_macro:.4f}, Accuracy: {accuracy:.4f}, PR AUC: {pr_auc:.4f}, Loss: {loss:.4f}")
 
     # Log metrics to wandb
     wandb.log({
         "f1_micro": f1_micro,
-        "f1_macro": f1_macro
+        "f1_macro": f1_macro,
+        "accuracy": accuracy,
+        "pr_auc": pr_auc,
+        "loss": loss
     })
 
     logger.info(f"Saving model to {LR_MODEL_PATH}")
-    save_model(model, LR_MODEL_PATH)
+    joblib.dump(model, LR_MODEL_PATH)
 
     wandb.finish()
 
