@@ -133,7 +133,7 @@ def objective(trial):
     result = trainer.train()
     metrics = trainer.evaluate()
 
-    wandb.log(result)
+    #wandb.log(result)
     wandb.log(metrics)
     wandb.finish()
 
