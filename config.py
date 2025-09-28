@@ -69,3 +69,7 @@ LSTM_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "lstm_model.pt")
 #LEGAL_BERT_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "legal_bert_model.pt")
 
 LEGAL_BERT_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "legalbert_outputs")
+
+# HYPER PARAMETER TUNING
+HP_ARTIFACTS_PATH = os.path.join(ARTIFACTS_DIR,"hp_tuning")
+BEST_PARAMS_PATH = os.path.join(HP_ARTIFACTS_PATH, "best_params.json")
