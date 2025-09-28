@@ -107,7 +107,7 @@ def objective(trial):
 
     training_args = TrainingArguments(
         output_dir=os.path.join(ARTIFACTS_DIR, f"trial_{trial.number}"),
-        evaluation_strategy="epoch",
+        eval_strategy="epoch",
         save_strategy="no",  # avoid checkpoint clutter during tuning
         learning_rate=learning_rate,
         per_device_train_batch_size=per_device_batch_size,
