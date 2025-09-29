@@ -43,22 +43,36 @@ def compute_class_weights(y_train: np.ndarray):
     return torch.tensor(pos_weights, dtype=torch.float32)
 
 
-
 class WeightedTrainer(Trainer):
-    def __init__(self, pos_weight=None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, pos_weight=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.pos_weight = pos_weight
 
-    def compute_loss(self, model, inputs, return_outputs=False):
+    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         labels = inputs.get("labels")
         outputs = model(**inputs)
         logits = outputs.get("logits")
 
-        # Adding BCE with pos_weight for imbalance handling
         loss_fct = torch.nn.BCEWithLogitsLoss(pos_weight=self.pos_weight.to(logits.device))
         loss = loss_fct(logits, labels)
 
         return (loss, outputs) if return_outputs else loss
+    
+# class WeightedTrainer(Trainer):
+#     def __init__(self, pos_weight=None, **kwargs):
+#         super().__init__(**kwargs)
+#         self.pos_weight = pos_weight
+
+#     def compute_loss(self, model, inputs, return_outputs=False):
+#         labels = inputs.get("labels")
+#         outputs = model(**inputs)
+#         logits = outputs.get("logits")
+
+#         # Adding BCE with pos_weight for imbalance handling
+#         loss_fct = torch.nn.BCEWithLogitsLoss(pos_weight=self.pos_weight.to(logits.device))
+#         loss = loss_fct(logits, labels)
+
+#         return (loss, outputs) if return_outputs else loss
 
 
 def train_legalbert_with_pos_weight():
