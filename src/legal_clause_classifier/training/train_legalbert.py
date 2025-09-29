@@ -9,7 +9,8 @@ from datasets import load_from_disk
 from transformers import (
     Trainer,
     TrainingArguments,
-    AutoTokenizer
+    AutoTokenizer,
+    AutoModelForSequenceClassification
 )
 from sklearn.metrics import f1_score, average_precision_score, accuracy_score
 
@@ -20,7 +21,8 @@ from config import (
     TOKENIZED_TRAIN, TOKENIZED_VAL, TOKENIZED_TEST,
     LABEL_LIST_PATH, LEGAL_BERT_MODEL_PATH,
     POS_WEIGHTS_PATH, LEGAL_BERT_WITH_POS_MODEL_PATH,
-    LEGAL_BERT_WITH_FOCAL_LOSS_PATH
+    LEGAL_BERT_WITH_FOCAL_LOSS_PATH,
+    LEGAL_BERT_WITH_RESAMPLING_PATH
 )
 import json
 from datasets import Value
@@ -32,8 +34,7 @@ config = {
     "batch_size": 8,
     "learning_rate": 2e-5,
     "weight_decay": 0.01,
-    "warmup_ratio": 0.1,
-    "loss": "pos weights"
+    "warmup_ratio": 0.1
 }
 
 # ====  Parameters of Legal BERT ====
@@ -303,7 +304,7 @@ def train_legalbert_with_focal_loss():
     trainer.save_model(LEGAL_BERT_WITH_FOCAL_LOSS_PATH)
     print(f"Model saved at {LEGAL_BERT_WITH_FOCAL_LOSS_PATH}")
 
-    # 🧠 Upload model as next version of W&B artifact
+    # Upload model as next version of W&B artifact
     artifact = wandb.Artifact(
         name="legal-bert-v2",  # SAME name = auto-versioning (v0 → v1)
         type="model",
@@ -323,3 +324,85 @@ def train_legalbert_with_focal_loss():
     wandb.finish()
     
     
+
+
+
+########### Legal BERT with Resampling #############
+
+def train_legalbert_with_resampling():
+    run = wandb.init(
+        project="legal-clause-classifier",  
+        name="legal-bert-with-resampling", 
+        config={
+            "epochs": EPOCHS,
+            "batch_size": BATCH_SIZE,
+            "learning_rate": LEARNING_RATE,
+            "weight_decay": WEIGHT_DECAY,
+            "warmup_ratio": WARMUP_RATIO
+        }
+    )
+
+    train_ds = load_from_disk(TOKENIZED_TRAIN)
+    val_ds = load_from_disk(TOKENIZED_VAL)
+
+    model_name="nlpaueb/legal-bert-base-uncased"
+    
+    # Load label list for num_labels
+    with open(LABEL_LIST_PATH, "r") as f:
+        label_list = json.load(f)
+
+    model = AutoModelForSequenceClassification.from_pretrained(
+        model_name,
+        num_labels=len(label_list),
+        problem_type="multi_label_classification"
+    )
+
+    training_args = TrainingArguments(
+        output_dir= LEGAL_BERT_WITH_RESAMPLING_PATH,
+        evaluation_strategy="epoch",
+        save_strategy="epoch",
+        learning_rate=LEARNING_RATE,
+        per_device_train_batch_size=BATCH_SIZE,
+        per_device_eval_batch_size=BATCH_SIZE,
+        num_train_epochs=EPOCHS,
+        weight_decay=WEIGHT_DECAY,
+        warmup_ratio=WARMUP_RATIO,
+        logging_steps=LOGGING_STEPS,
+        load_best_model_at_end=True,
+        metric_for_best_model="micro_f1",
+        greater_is_better=True,
+        report_to="wandb",
+    )
+
+    trainer = ResampledTrainer(
+        model=model,
+        args=training_args,
+        train_dataset=train_ds,
+        eval_dataset=val_ds,
+        compute_metrics=compute_metrics,
+        data_collator=float_data_collator,
+    )
+
+    trainer.train()
+    trainer.save_model(LEGAL_BERT_WITH_RESAMPLING_PATH)
+    print(f"Resampled model saved at {LEGAL_BERT_WITH_RESAMPLING_PATH}")
+
+    # Upload model as next version of W&B artifact
+    artifact = wandb.Artifact(
+        name="legal-bert-v2",  # SAME name = auto-versioning (v0 → v1)
+        type="model",
+        description="LegalBERT model fine-tuned with resampling.",
+        metadata=config
+    )
+
+    # Add saved model files to the artifact
+    artifact.add_file(os.path.join(LEGAL_BERT_WITH_RESAMPLING_PATH, "model.safetensors"))
+    artifact.add_file(os.path.join(LEGAL_BERT_WITH_RESAMPLING_PATH, "config.json"))
+    artifact.add_file(os.path.join(LEGAL_BERT_WITH_RESAMPLING_PATH, "training_args.bin"))
+
+    # Log the new version of the model
+    run.log_artifact(artifact)
+
+    # Finish WandB run
+    wandb.finish()
+

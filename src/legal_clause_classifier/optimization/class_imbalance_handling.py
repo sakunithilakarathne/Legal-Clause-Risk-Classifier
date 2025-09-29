@@ -4,7 +4,8 @@ import torch.nn.functional as F
 import numpy as np
 from transformers import Trainer
 from config import POS_WEIGHTS_PATH
-
+from torch.utils.data import WeightedRandomSampler
+from torch.utils.data import DataLoader
 
 ################# CLASS IMBALANCE HANDLING USING BCEWithLogistsLoss ###################
 
@@ -77,9 +78,51 @@ class FocalLossTrainer(Trainer):
         super().__init__(*args, **kwargs)
         self.criterion = FocalLoss(gamma=gamma)
 
-    def compute_loss(self, model, inputs, return_outputs=False):
+    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         labels = inputs.get("labels").float()
         outputs = model(**inputs)
         logits = outputs.logits
         loss = self.criterion(logits, labels)
         return (loss, outputs) if return_outputs else loss
+
+
+
+########### CLASS IMBALANCE HANDLING USING OVERSAMPLING #####################
+
+def create_weighted_sampler(labels: np.ndarray):
+    # Class counts
+    class_counts = labels.sum(axis=0)   # num_classes
+    class_freq = class_counts / labels.shape[0]
+
+    # Avoid div-by-zero
+    class_weights = 1.0 / (class_freq + 1e-6)
+
+    # Each sample weight = sum of weights of positive labels
+    sample_weights = (labels * class_weights).sum(axis=1)
+
+    return WeightedRandomSampler(
+        weights=sample_weights,
+        num_samples=len(sample_weights),
+        replacement=True
+    )
+
+
+class ResampledTrainer(Trainer):
+    def get_train_dataloader(self):
+        """
+        Override Trainer to use WeightedRandomSampler for training.
+        """
+        if self.train_dataset is None:
+            raise ValueError("Trainer: training requires a train_dataset.")
+
+        labels = np.array(self.train_dataset["labels"])
+        sampler = create_weighted_sampler(labels)
+
+        return DataLoader(
+            self.train_dataset,
+            sampler=sampler,
+            batch_size=self.args.train_batch_size,
+            collate_fn=self.data_collator,
+            drop_last=self.args.dataloader_drop_last,
+            num_workers=self.args.dataloader_num_workers,
+        )
