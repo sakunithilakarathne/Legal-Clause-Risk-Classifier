@@ -93,6 +93,7 @@ def run_threshold_optimization():
     model = AutoModelForSequenceClassification.from_pretrained(
         LEGAL_BERT_WITH_FOCAL_LOSS_PATH, 
         num_labels=num_labels, 
+        local_files_only=True,
         problem_type="multi_label_classification")
     model.to(DEVICE)
 

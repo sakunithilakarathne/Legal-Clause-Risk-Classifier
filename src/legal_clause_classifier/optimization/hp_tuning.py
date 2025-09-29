@@ -8,7 +8,7 @@ import torch
 from datasets import load_from_disk
 from datasets import Value, Sequence
 from sklearn.metrics import f1_score, accuracy_score, average_precision_score
-from optuna.integration import HuggingFaceTrainerPruningCallback
+from transformers.integrations import HuggingFaceTrainerCallback
 
 from transformers import (
     TrainingArguments,
