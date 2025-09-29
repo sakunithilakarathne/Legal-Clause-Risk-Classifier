@@ -8,10 +8,9 @@ import torch
 from datasets import load_from_disk
 from datasets import Value, Sequence
 from sklearn.metrics import f1_score, accuracy_score, average_precision_score
-from transformers.integrations import HuggingFaceTrainerCallback
-
 from transformers import (
     TrainingArguments,
+    TrainerCallback,
     Trainer,
     default_data_collator,
     AutoModelForSequenceClassification,
@@ -68,6 +67,19 @@ def float_data_collator(features):
     if "labels" in batch:
         batch["labels"] = batch["labels"].float()
     return batch
+
+
+
+class OptunaPruningCallback(TrainerCallback):
+    def __init__(self, trial, metric_name="eval_micro_f1"):
+        self.trial = trial
+        self.metric_name = metric_name
+
+    def on_evaluate(self, args, state, control, metrics=None, **kwargs):
+        if metrics and self.metric_name in metrics:
+            self.trial.report(metrics[self.metric_name], step=state.global_step)
+            if self.trial.should_prune():
+                raise optuna.TrialPruned()
 
 
 # -------------------- Objective for Optuna --------------------
@@ -137,7 +149,7 @@ def objective(trial):
         eval_dataset=val_ds,
         compute_metrics=compute_metrics,
         data_collator=float_data_collator,
-        callbacks=[HuggingFaceTrainerPruningCallback(trial, "eval_micro_f1")]
+        callbacks= [OptunaPruningCallback(trial, "eval_micro_f1")]
     )
 
     trainer.train()
@@ -157,7 +169,7 @@ def hyperparameter_tuning():
     pruner = optuna.pruners.MedianPruner(n_warmup_steps=1)
     study = optuna.create_study(
         direction="maximize",
-        pruner=pruner,
+        pruner= pruner,
         study_name="legalbert_hp_tuning"
     )
     study.optimize(objective, n_trials=35,timeout=None)  
