@@ -73,3 +73,6 @@ LEGAL_BERT_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "legalbert_outputs")
 # HYPER PARAMETER TUNING
 HP_ARTIFACTS_PATH = os.path.join(ARTIFACTS_DIR,"hp_tuning")
 BEST_PARAMS_PATH = os.path.join(HP_ARTIFACTS_PATH, "best_params.json")
+
+LEGAL_BERT_WITH_POS_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "legalbert_with_posweights_outputs")
+POS_WEIGHTS_PATH = os.path.join(ARTIFACTS_DIR, "pos_weight.npy")
