@@ -78,3 +78,7 @@ LEGAL_BERT_WITH_POS_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "legalbert_with_pos
 POS_WEIGHTS_PATH = os.path.join(ARTIFACTS_DIR, "pos_weight.npy")
 LEGAL_BERT_WITH_FOCAL_LOSS_PATH = os.path.join(ARTIFACTS_DIR, "legalbert_with_focalloss_outputs")
 LEGAL_BERT_WITH_RESAMPLING_PATH = os.path.join(ARTIFACTS_DIR, "legalbert_with_resampling_outputs")
+
+
+THRESHOLDS_PATH = os.path.join(ARTIFACTS_DIR, "optimized_thresholds.json")
+THRESHOLD_METRICS_PATH = os.path.join(ARTIFACTS_DIR, "validation_metrics.json")
