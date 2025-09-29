@@ -27,6 +27,15 @@ from datasets import Value
 from transformers import Trainer, TrainingArguments, default_data_collator
 from datasets import load_from_disk, Sequence, Value
 
+config = {
+    "epochs": 5,
+    "batch_size": 8,
+    "learning_rate": 2e-5,
+    "weight_decay": 0.01,
+    "warmup_ratio": 0.1,
+    "loss": "pos weights"
+}
+
 # ====  Parameters of Legal BERT ====
 BATCH_SIZE = 8
 EPOCHS = 5
@@ -218,10 +227,10 @@ def train_legalbert_with_pos_weight():
 
     # Log model to WandB as an artifact
     artifact = wandb.Artifact(
-    name="legal-bert-v2-with-pos",  # Same name to version it
+    name="legal-bert-v2",  # Same name to version it
     type="model",
     description="LegalBERT model fine-tuned with class imbalance handling via pos_weight.",
-    metadata=dict(wandb.config)
+    metadata=config
     )
     
     
@@ -229,7 +238,7 @@ def train_legalbert_with_pos_weight():
     artifact.add_file("artifacts/legalbert_with_posweights_outputs/config.json")
     artifact.add_file("artifacts/legalbert_with_posweights_outputs/training_args.bin")
 
-    wandb.log_artifact(artifact)
+    run.log_artifact(artifact)
 
     wandb.finish()
 
@@ -263,7 +272,7 @@ def train_legalbert_with_focal_loss():
 
     training_args = TrainingArguments(
         output_dir=os.path.join(ARTIFACTS_DIR, "legalbert_with_focalloss_outputs"),
-        evaluation_strategy="epoch",
+        eval_strategy="epoch",
         save_strategy="epoch",
         learning_rate=LEARNING_RATE,
         per_device_train_batch_size=BATCH_SIZE,
@@ -296,10 +305,10 @@ def train_legalbert_with_focal_loss():
 
     # 🧠 Upload model as next version of W&B artifact
     artifact = wandb.Artifact(
-        name="legal-bert-v2-with-focalloss",  # SAME name = auto-versioning (v0 → v1)
+        name="legal-bert-v2",  # SAME name = auto-versioning (v0 → v1)
         type="model",
         description="LegalBERT model fine-tuned with focal loss.",
-        metadata=dict(wandb.config)
+        metadata=config
     )
 
     # Add saved model files to the artifact
