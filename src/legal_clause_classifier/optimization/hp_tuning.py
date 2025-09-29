@@ -78,10 +78,10 @@ def objective(trial):
         label_list = json.load(f)
 
     # Sample hyperparameters
-    learning_rate = trial.suggest_float("learning_rate", 1e-6, 5e-5, log=True)
+    learning_rate = trial.suggest_float("learning_rate", 2e-5, 5e-5, log=True)
     weight_decay = trial.suggest_float("weight_decay", 0.0, 0.3)
     per_device_batch_size = trial.suggest_categorical("batch_size", [8, 16, 32])
-    num_train_epochs = trial.suggest_int("epochs", 3, 6)
+    num_train_epochs = trial.suggest_int("epochs", 3, 8)
     warmup_ratio = trial.suggest_float("warmup_ratio", 0.0, 0.2)
 
     # W&B logging

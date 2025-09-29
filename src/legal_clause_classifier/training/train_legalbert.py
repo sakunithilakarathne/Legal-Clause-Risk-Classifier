@@ -16,6 +16,8 @@ from sklearn.metrics import f1_score, average_precision_score, accuracy_score
 
 from src.legal_clause_classifier.models.legal_bert import get_legalbert_model
 from src.legal_clause_classifier.optimization.class_imbalance_handling import *
+
+
 from config import (
     ARTIFACTS_DIR, Y_TRAIN_PATH, Y_VAL_PATH, Y_TEST_PATH,
     TOKENIZED_TRAIN, TOKENIZED_VAL, TOKENIZED_TEST,
@@ -359,7 +361,7 @@ def train_legalbert_with_resampling():
 
     training_args = TrainingArguments(
         output_dir= LEGAL_BERT_WITH_RESAMPLING_PATH,
-        evaluation_strategy="epoch",
+        eval_strategy="epoch",
         save_strategy="epoch",
         learning_rate=LEARNING_RATE,
         per_device_train_batch_size=BATCH_SIZE,
