@@ -7,7 +7,7 @@ from transformers import AutoModelForSequenceClassification, DataCollatorWithPad
 from datasets import load_from_disk
 from sklearn.metrics import f1_score, average_precision_score, accuracy_score
 from config import (TOKENIZED_VAL, Y_VAL_PATH, LEGAL_BERT_WITH_FOCAL_LOSS_PATH,
-                    THRESHOLDS_PATH, THRESHOLD_METRICS_PATH)
+                    THRESHOLDS_PATH, THRESHOLD_METRICS_PATH, WANDB_ARTIFACTS_PATH)
 import wandb
 
 
@@ -80,9 +80,19 @@ def get_best_thresholds(model, dataloader, y_true, num_classes):
 
 
 def run_threshold_optimization():
-    wandb.init(project="legal-clause-classifier", 
+    # Initialize W&B run
+    run = wandb.init(project="legal-clause-classifier", 
                name="threshold-optimization",
                job_type="threshold_opt")
+    
+    # Use the artifact
+    artifact = run.use_artifact(
+        'scsthilakarathne-nibm/legal-clause-classifier/legal-bert-v2:v2', 
+        type='model'
+    )
+    
+    # Download artifact and get local path
+    WANDB_ARTIFACTS_PATH = artifact.download()
     
     # Load validation dataset
     val_ds, y_val = load_val_dataset()
@@ -91,7 +101,7 @@ def run_threshold_optimization():
     # Load trained model
     num_labels = y_val.shape[1]
     model = AutoModelForSequenceClassification.from_pretrained(
-        LEGAL_BERT_WITH_FOCAL_LOSS_PATH, 
+        WANDB_ARTIFACTS_PATH = artifact.download(), 
         num_labels=num_labels, 
         local_files_only=True,
         problem_type="multi_label_classification")
@@ -110,7 +120,7 @@ def run_threshold_optimization():
     print("Validation Metrics:", val_metrics)
 
     # Adding artifacts to wandb
-    artifact = wandb.Artifact(
+    thresholds_artifact = wandb.Artifact(
         name="thresholds-v1",  
         type="thresholds",    
         description="Optimized decision thresholds for LegalBERT model with focal loss",
@@ -120,10 +130,10 @@ def run_threshold_optimization():
         }
     )
 
-    artifact.add_file(THRESHOLDS_PATH)
-    artifact.add_file(THRESHOLD_METRICS_PATH)
+    thresholds_artifact.add_file(THRESHOLDS_PATH)
+    thresholds_artifact.add_file(THRESHOLD_METRICS_PATH)
 
-    wandb.log_artifact(artifact)
+    wandb.log_artifact(thresholds_artifact)
     
     wandb.finish()
 

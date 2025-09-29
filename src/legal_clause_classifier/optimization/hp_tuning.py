@@ -83,7 +83,6 @@ class OptunaPruningCallback(TrainerCallback):
 
 
 # -------------------- Objective for Optuna --------------------
-from optuna.integration import HuggingFaceTrainerPruningCallback
 
 def objective(trial):
     train_ds, val_ds = load_data()
