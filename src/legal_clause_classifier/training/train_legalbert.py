@@ -344,8 +344,7 @@ def train_legalbert_with_resampling():
         }
     )
 
-    train_ds = load_from_disk(TOKENIZED_TRAIN)
-    val_ds = load_from_disk(TOKENIZED_VAL)
+    train_ds, val_ds, test_ds = load_data()
 
     model_name="nlpaueb/legal-bert-base-uncased"
     
