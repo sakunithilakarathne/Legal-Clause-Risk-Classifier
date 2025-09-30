@@ -16,6 +16,8 @@ nltk.download('punkt')
 nltk.download('punkt_tab')
 from nltk.tokenize import word_tokenize
 import pickle
+from datasets import load_from_disk
+from config import (TRAIN_OVERSAMPLED_PATH,TOKENIZED_TRAIN_OS)
 
 from src.legal_clause_classifier.utils.logger import get_logger
 
@@ -209,3 +211,80 @@ def transformer_tokenization(train_df, test_df, val_df):
 
     #return train_tokenized, val_tokenized, test_tokenized
 
+
+
+def tokenize_oversampled_train(TRAIN_OVERSAMPLED_PATH, val_ds=None, test_ds=None):
+    """
+    Tokenize oversampled training dataset and optionally validation and test sets.
+
+    Args:
+        train_ds_os (Dataset): Oversampled training dataset (HF Dataset)
+        val_ds (Dataset, optional): Validation dataset (HF Dataset)
+        test_ds (Dataset, optional): Test dataset (HF Dataset)
+
+    Returns:
+        Tuple[Dataset, Dataset, Dataset]: Tokenized datasets
+    """
+    MODEL_NAME = "nlpaueb/legal-bert-base-uncased"
+    MAX_LEN = 384
+
+    train_ds_os = load_from_disk(TRAIN_OVERSAMPLED_PATH)
+
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+        logger.info(f"Loaded tokenizer: {MODEL_NAME}")
+    except Exception as e:
+        logger.exception(f"Failed to load tokenizer {MODEL_NAME}")
+        raise e
+
+    def tokenize_batch(batch):
+        return tokenizer(
+            batch["clause_text"],
+            padding="max_length",
+            truncation=True,
+            max_length=MAX_LEN
+        )
+
+    # Tokenize oversampled train dataset
+    try:
+        train_tokenized = train_ds_os.map(tokenize_batch, batched=True, remove_columns=list(train_ds_os.column_names))
+        logger.info("Oversampled train dataset tokenized.")
+    except Exception as e:
+        logger.exception("Error during tokenization of oversampled train dataset.")
+        raise e
+
+    # Tokenize validation dataset if provided
+    if val_ds is not None:
+        try:
+            val_tokenized = val_ds.map(tokenize_batch, batched=True, remove_columns=list(val_ds.column_names))
+            logger.info("Validation dataset tokenized.")
+        except Exception as e:
+            logger.exception("Error during tokenization of validation dataset.")
+            raise e
+    else:
+        val_tokenized = None
+
+    # Tokenize test dataset if provided
+    if test_ds is not None:
+        try:
+            test_tokenized = test_ds.map(tokenize_batch, batched=True, remove_columns=list(test_ds.column_names))
+            logger.info("Test dataset tokenized.")
+        except Exception as e:
+            logger.exception("Error during tokenization of test dataset.")
+            raise e
+    else:
+        test_tokenized = None
+
+    # Save tokenized datasets
+    try:
+        train_tokenized.save_to_disk(TOKENIZED_TRAIN_OS)
+        logger.info(f"Oversampled tokenized train dataset saved at {TOKENIZED_TRAIN_OS}")
+        if val_tokenized:
+            val_tokenized.save_to_disk(TOKENIZED_VAL)
+        if test_tokenized:
+            test_tokenized.save_to_disk(TOKENIZED_TEST)
+    except Exception as e:
+        logger.exception("Failed to save tokenized datasets.")
+        raise e
+
+    return train_tokenized, val_tokenized, test_tokenized

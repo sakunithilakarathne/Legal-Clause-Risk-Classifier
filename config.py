@@ -30,6 +30,7 @@ TFIDF_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "tfidf.pkl")
 TRAIN_PARQUET_PATH = os.path.join(ARTIFACTS_DIR, "train.parquet")
 TEST_PARQUET_PATH = os.path.join(ARTIFACTS_DIR, "test.parquet")
 VAL_PARQUET_PATH = os.path.join(ARTIFACTS_DIR, "val.parquet")
+TRAIN_OVERSAMPLED_PATH = os.path.join(ARTIFACTS_DIR, "train_oversampled")
 
 # Y Train, Test and Val sets
 Y_TRAIN_PATH = os.path.join(ARTIFACTS_DIR, "y_train.npy")
@@ -52,6 +53,7 @@ LSTM_TOKENIZED_TEST = os.path.join(ARTIFACTS_DIR, "X_test_lstm.npy")
 TOKENIZED_TRAIN = os.path.join(ARTIFACTS_DIR, "train_tokenized")
 TOKENIZED_VAL = os.path.join(ARTIFACTS_DIR, "val_tokenized")
 TOKENIZED_TEST = os.path.join(ARTIFACTS_DIR, "test_tokenized")
+TOKENIZED_TRAIN_OS = os.path.join(ARTIFACTS_DIR, "train_oversampled_tokenized")
 
 # Logistic Regression Model
 LR_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "logistic_model.pkl")
