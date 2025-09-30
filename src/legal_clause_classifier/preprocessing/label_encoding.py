@@ -213,7 +213,7 @@ def transformer_tokenization(train_df, test_df, val_df):
 
 
 
-def tokenize_oversampled_train(TRAIN_OVERSAMPLED_PATH, val_ds=None, test_ds=None):
+def tokenize_oversampled_train():
     """
     Tokenize oversampled training dataset and optionally validation and test sets.
 
@@ -253,38 +253,36 @@ def tokenize_oversampled_train(TRAIN_OVERSAMPLED_PATH, val_ds=None, test_ds=None
         logger.exception("Error during tokenization of oversampled train dataset.")
         raise e
 
-    # Tokenize validation dataset if provided
-    if val_ds is not None:
-        try:
-            val_tokenized = val_ds.map(tokenize_batch, batched=True, remove_columns=list(val_ds.column_names))
-            logger.info("Validation dataset tokenized.")
-        except Exception as e:
-            logger.exception("Error during tokenization of validation dataset.")
-            raise e
-    else:
-        val_tokenized = None
+    # # Tokenize validation dataset if provided
+    # if val_ds is not None:
+    #     try:
+    #         val_tokenized = val_ds.map(tokenize_batch, batched=True, remove_columns=list(val_ds.column_names))
+    #         logger.info("Validation dataset tokenized.")
+    #     except Exception as e:
+    #         logger.exception("Error during tokenization of validation dataset.")
+    #         raise e
+    # else:
+    #     val_tokenized = None
 
-    # Tokenize test dataset if provided
-    if test_ds is not None:
-        try:
-            test_tokenized = test_ds.map(tokenize_batch, batched=True, remove_columns=list(test_ds.column_names))
-            logger.info("Test dataset tokenized.")
-        except Exception as e:
-            logger.exception("Error during tokenization of test dataset.")
-            raise e
-    else:
-        test_tokenized = None
+    # # Tokenize test dataset if provided
+    # if test_ds is not None:
+    #     try:
+    #         test_tokenized = test_ds.map(tokenize_batch, batched=True, remove_columns=list(test_ds.column_names))
+    #         logger.info("Test dataset tokenized.")
+    #     except Exception as e:
+    #         logger.exception("Error during tokenization of test dataset.")
+    #         raise e
+    # else:
+    #     test_tokenized = None
 
     # Save tokenized datasets
     try:
         train_tokenized.save_to_disk(TOKENIZED_TRAIN_OS)
         logger.info(f"Oversampled tokenized train dataset saved at {TOKENIZED_TRAIN_OS}")
-        if val_tokenized:
-            val_tokenized.save_to_disk(TOKENIZED_VAL)
-        if test_tokenized:
-            test_tokenized.save_to_disk(TOKENIZED_TEST)
+        # if val_tokenized:
+        #     val_tokenized.save_to_disk(TOKENIZED_VAL)
+        # if test_tokenized:
+        #     test_tokenized.save_to_disk(TOKENIZED_TEST)
     except Exception as e:
         logger.exception("Failed to save tokenized datasets.")
         raise e
-
-    return train_tokenized, val_tokenized, test_tokenized
