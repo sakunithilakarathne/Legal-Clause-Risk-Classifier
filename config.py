@@ -98,3 +98,5 @@ OS_BEST_PARAMS_PATH = os.path.join(ARTIFACTS_DIR, "os_best_params.jsons")
 OUTPUT_DIR = os.path.join(ARTIFACTS_DIR, "explain_outputs")
 
 HP_TUNED_OS_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "os_hp_tuned_model_outputs")
+
+FINAL_TEST_METRICES = os.path.join(ARTIFACTS_DIR, "final_test_metrics.json")
