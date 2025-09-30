@@ -1,0 +1,9 @@
+{
+    "learning_rate": 4.38974834148095e-05,
+    "weight_decay": 0.0036198729810100684,
+    "batch_size": 8,
+    "epochs": 5,
+    "warmup_ratio": 0.056081183473500454,
+    "dropout": 0.22267722377967805,
+    "grad_accum": 1
+}
