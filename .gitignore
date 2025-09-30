@@ -227,3 +227,8 @@ Notebooks/datasets
 # Ignore wandb
 wandb
 artifacts/legalbert_with_focalloss_outputs/model.safetensors
+
+# Ignore large model files
+*.safetensors
+*.bin
+*.safetensors
