@@ -35,13 +35,22 @@ def captum_explanation(model, input_ids, attention_mask, idx_to_label):
     attributions_per_class = {}
 
     for class_idx, label in idx_to_label.items():
-        attr, delta = ig.attribute(
-            inputs=input_ids,
-            additional_forward_args=(attention_mask,),
-            target=class_idx,
-            return_convergence_delta=True
-        )
-        attributions_per_class[label] = attr.detach().cpu().numpy()
+        class_attrs = []
+        for i in range(input_ids.shape[0]):
+            single_input = input_ids[i].unsqueeze(0)
+            single_mask = attention_mask[i].unsqueeze(0)
+
+            attr, delta = ig.attribute(
+                inputs=single_input,
+                additional_forward_args=(single_mask,),
+                target=class_idx,
+                return_convergence_delta=True
+            )
+
+            class_attrs.append(attr.detach().cpu().numpy())
+            torch.cuda.empty_cache()   # free memory each iteration
+
+        attributions_per_class[label] = class_attrs
         print(f"[Captum] Explained class: {label}")
 
     return attributions_per_class
@@ -55,8 +64,9 @@ def shap_explanation(model, tokenizer, input_ids, attention_mask, idx_to_label):
             logits = model(input_ids=batch_ids, attention_mask=batch_mask).logits
             return torch.sigmoid(logits).cpu().numpy()
     
-    explainer = shap.KernelExplainer(f, input_ids[:10].cpu().numpy())
-    shap_values = explainer.shap_values(input_ids.cpu().numpy(), nsamples=50)
+   
+    explainer = shap.KernelExplainer(f, input_ids[:5].cpu().numpy())
+    shap_values = explainer.shap_values(input_ids[:5].cpu().numpy(), nsamples=20)
     print("[SHAP] Explanation completed")
     
     shap_per_class = {label: shap_val for label, shap_val in zip(idx_to_label.values(), shap_values)}
@@ -96,7 +106,7 @@ def run_explainable_ai_pipeline():
 
     val_ds = load_from_disk(TOKENIZED_VAL)
 
-    input_ids, attention_mask = ds_to_tensors(val_ds, max_samples=50)  # limit for speed
+    input_ids, attention_mask = ds_to_tensors(val_ds, max_samples=5)  # limit for speed
 
     # Load label list from artifact
     with open(os.path.join(LABEL_LIST_PATH), "r") as f:
