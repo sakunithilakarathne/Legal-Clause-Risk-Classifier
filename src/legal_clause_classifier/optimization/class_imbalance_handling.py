@@ -87,7 +87,7 @@ class FocalLossTrainer(Trainer):
 
 
 
-########### CLASS IMBALANCE HANDLING USING OVERSAMPLING #####################
+########### CLASS IMBALANCE HANDLING USING CLASS WEIGHTS #####################
 
 def create_weighted_sampler(labels: np.ndarray):
     # Class counts
