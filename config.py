@@ -84,3 +84,5 @@ THRESHOLDS_PATH = os.path.join(ARTIFACTS_DIR, "optimized_thresholds.json")
 THRESHOLD_METRICS_PATH = os.path.join(ARTIFACTS_DIR, "validation_metrics.json")
 
 WANDB_ARTIFACTS_PATH = os.path.join(ARTIFACTS_DIR, "wandb_artifacts")
+
+HP_TUNED_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "hp_tuned_model_outputs")

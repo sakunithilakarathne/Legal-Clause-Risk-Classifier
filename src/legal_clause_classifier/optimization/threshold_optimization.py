@@ -92,7 +92,7 @@ def run_threshold_optimization():
     )
     
     # Download artifact and get local path
-    WANDB_ARTIFACTS_PATH = artifact.download()
+    model_dir = artifact.download()
     
     # Load validation dataset
     val_ds, y_val = load_val_dataset()
@@ -111,6 +111,8 @@ def run_threshold_optimization():
     best_thresholds, val_metrics = get_best_thresholds(model, val_loader, y_val, num_labels)
 
     # Save thresholds and metrics
+    os.makedirs(os.path.dirname(THRESHOLDS_PATH), exist_ok=True)
+    os.makedirs(os.path.dirname(THRESHOLD_METRICS_PATH), exist_ok=True)
     with open(THRESHOLDS_PATH, "w") as f:
         json.dump(best_thresholds, f, indent=4)
     with open(THRESHOLD_METRICS_PATH, "w") as f:

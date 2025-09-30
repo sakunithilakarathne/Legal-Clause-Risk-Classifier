@@ -175,6 +175,7 @@ def hyperparameter_tuning():
     best_trial = study.best_trial
     best_params = best_trial.params
     
+    os.makedirs(os.path.dirname(BEST_PARAMS_PATH), exist_ok=True)
     with open(BEST_PARAMS_PATH, "w") as f:
         json.dump(best_params, f, indent=4)
 
