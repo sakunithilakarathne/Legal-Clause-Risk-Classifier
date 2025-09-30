@@ -53,7 +53,7 @@ def evaluate(model, loader, device):
     pr_auc = average_precision_score(labels, preds, average="micro")
     accuracy = accuracy_score(labels, preds > 0.5)
 
-    return micro_f1, macro_f1, pr_auc
+    return micro_f1, macro_f1, pr_auc, accuracy
 
 
 
