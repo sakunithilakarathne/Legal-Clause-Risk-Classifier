@@ -1,26 +1,19 @@
 import os
-import openai
+import openai as OpenAI
 import json
 import re
 from config import LABEL_LIST_PATH
-# -------------------------
-# SETUP
-# -------------------------
-# Ensure your OpenAI API key is set:
-# export OPENAI_API_KEY="your_api_key_here"
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# -------------------------
-# LOAD LABEL LIST
-# -------------------------
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+#openai.api_key = os.getenv("OPENAI_API_KEY")
+
+
 def load_labels(label_file: str = LABEL_LIST_PATH):
     """Load categories from JSON file."""
     with open(label_file, "r", encoding="utf-8") as f:
         return json.load(f)
 
-# -------------------------
-# PROMPT TEMPLATES
-# -------------------------
+
 SYSTEM_PROMPT = """You are a legal classification assistant.
 You will classify a legal clause into CUAD categories.
 Always return JSON only, with exactly three ranked predictions
@@ -46,9 +39,7 @@ JSON:
 }
 """
 
-# -------------------------
-# HELPERS
-# -------------------------
+
 def safe_extract_json(text: str):
     """Try to extract valid JSON from the model's response."""
     try:
@@ -63,9 +54,11 @@ def safe_extract_json(text: str):
                 return json.loads(s)
         raise ValueError(f"Could not parse JSON from response: {text[:200]}")
 
+
+
 def classify_clause_gpt(clause: str, categories: list, model: str = "gpt-4o-mini"):
     """
-    Classify a single legal clause using GPT.
+    Classify a single legal clause using GPT (works with openai>=1.0).
     Returns dict with predictions and explanation.
     """
     user_prompt = f"""
@@ -78,22 +71,19 @@ Clause: "{clause}"
 
 Return JSON only.
 """
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model=model,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt}
         ],
         temperature=0.0,
-        max_tokens=400,
-        n=1
+        max_tokens=400
     )
-    text = response["choices"][0]["message"]["content"].strip()
+    text = response.choices[0].message.content.strip()
     return safe_extract_json(text)
 
-# -------------------------
-# MAIN
-# -------------------------
+
 def run_gpt_clause_classifier():
     # Load label list
     categories = load_labels(LABEL_LIST_PATH)
