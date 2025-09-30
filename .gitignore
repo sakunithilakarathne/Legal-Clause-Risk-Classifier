@@ -225,4 +225,5 @@ Notebooks/datasets
 .vscode
 
 # Ignore wandb
-wandbartifacts/legalbert_with_focalloss_outputs/model.safetensors
+wandb
+artifacts/legalbert_with_focalloss_outputs/model.safetensors

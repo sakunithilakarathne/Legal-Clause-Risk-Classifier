@@ -36,6 +36,7 @@ TRAIN_OVERSAMPLED_PATH = os.path.join(ARTIFACTS_DIR, "train_oversampled")
 Y_TRAIN_PATH = os.path.join(ARTIFACTS_DIR, "y_train.npy")
 Y_VAL_PATH = os.path.join(ARTIFACTS_DIR, "y_val.npy")
 Y_TEST_PATH = os.path.join(ARTIFACTS_DIR, "y_test.npy")
+OS_Y_TRAIN_PATH = os.path.join(ARTIFACTS_DIR, "y_train_oversampled.npy")
 
 # TFIDF datasets
 X_TRAIN_TFIDF_PATH = os.path.join(ARTIFACTS_DIR, "X_train_tfidf.npz")
@@ -88,3 +89,5 @@ THRESHOLD_METRICS_PATH = os.path.join(ARTIFACTS_DIR, "validation_metrics.json")
 WANDB_ARTIFACTS_PATH = os.path.join(ARTIFACTS_DIR, "wandb_artifacts")
 
 HP_TUNED_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "hp_tuned_model_outputs")
+
+OS_LEGAL_BERT_WITH_FOCAL_LOSS = os.path.join(ARTIFACTS_DIR, "oversample_legalbert_with_focalloss_outputs")
