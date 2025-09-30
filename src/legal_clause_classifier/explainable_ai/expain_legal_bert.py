@@ -18,13 +18,16 @@ TOKENIZER_NAME = "nlpaueb/legal-bert-base-uncased"
 
 
 def ds_to_tensors(dataset, max_samples=None):
-    input_ids = torch.tensor(dataset['input_ids'][:max_samples]).to(DEVICE)
-    attention_mask = torch.tensor(dataset['attention_mask'][:max_samples]).to(DEVICE)
+    input_ids = torch.tensor(dataset['input_ids'][:max_samples], dtype=torch.long).to(DEVICE)  # ✅ force long
+    attention_mask = torch.tensor(dataset['attention_mask'][:max_samples], dtype=torch.long).to(DEVICE)  # ✅ force long
     return input_ids, attention_mask
 
 
 def captum_explanation(model, input_ids, attention_mask, idx_to_label):
     def forward_func(input_ids, attention_mask):
+        
+        input_ids = input_ids.long()
+        attention_mask = attention_mask.long()
         outputs = model(input_ids=input_ids, attention_mask=attention_mask)
         return torch.sigmoid(outputs.logits)
 
@@ -32,15 +35,16 @@ def captum_explanation(model, input_ids, attention_mask, idx_to_label):
     attributions_per_class = {}
 
     for class_idx, label in idx_to_label.items():
-        attr, delta = ig.attribute(inputs=input_ids,
-                                   additional_forward_args=(attention_mask,),
-                                   target=class_idx,
-                                   return_convergence_delta=True)
+        attr, delta = ig.attribute(
+            inputs=input_ids,
+            additional_forward_args=(attention_mask,),
+            target=class_idx,
+            return_convergence_delta=True
+        )
         attributions_per_class[label] = attr.detach().cpu().numpy()
         print(f"[Captum] Explained class: {label}")
 
     return attributions_per_class
-
 
 
 def shap_explanation(model, tokenizer, input_ids, attention_mask, idx_to_label):
@@ -114,7 +118,7 @@ def run_explainable_ai_pipeline():
     artifact = wandb.Artifact(
         name="explainable_ai", 
         type="model",
-        description="LegalBERT model fine-tuned with focal loss and hyperparameters."
+        description="SHAP and Captum explainability on Legal BERT"
     )
 
     # Add saved model files to the artifact
