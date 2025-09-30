@@ -38,16 +38,17 @@ def captum_explanation(model, input_ids, attention_mask, idx_to_label):
     attributions_per_class = {}
 
     for class_idx, label in idx_to_label.items():
-        attr, delta = ig.attribute(
-            inputs=embeddings,
-            additional_forward_args=(attention_mask,),
-            target=class_idx,
-            return_convergence_delta=True,
-            allow_unused=True
-        )
-        attributions_per_class[label] = attr.detach().cpu().numpy()
-        print(f"[Captum] Explained class: {label}")
-
+        try:
+            attr, delta = ig.attribute(
+                inputs=embeddings,
+                additional_forward_args=(attention_mask,),
+                target=class_idx,
+                return_convergence_delta=True
+            )
+            attributions_per_class[label] = attr.detach().cpu().numpy()
+            print(f"[Captum] Explained class: {label}")
+        except Exception as e:
+            print(f"[Captum] Could not explain class {label}: {e}")
     return attributions_per_class
 
 
