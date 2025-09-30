@@ -1,12 +1,10 @@
 import os
-import openai as OpenAI
+from openai import OpenAI
 import json
 import re
 from config import LABEL_LIST_PATH
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-#openai.api_key = os.getenv("OPENAI_API_KEY")
-
 
 def load_labels(label_file: str = LABEL_LIST_PATH):
     """Load categories from JSON file."""
