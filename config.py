@@ -93,3 +93,6 @@ HP_TUNED_MODEL_PATH = os.path.join(ARTIFACTS_DIR, "hp_tuned_model_outputs")
 OS_LEGAL_BERT_WITH_FOCAL_LOSS = os.path.join(ARTIFACTS_DIR, "oversample_legalbert_with_focalloss_outputs")
 
 OS_BEST_PARAMS_PATH = os.path.join(ARTIFACTS_DIR, "os_best_params.jsons")
+
+# Explainable AI
+OUTPUT_DIR = os.path.join(ARTIFACTS_DIR, "explain_outputs")
