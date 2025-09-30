@@ -18,10 +18,9 @@ from src.legal_clause_classifier.models.legal_bert import get_legalbert_model
 from src.legal_clause_classifier.optimization.class_imbalance_handling import *
 
 from config import (
-    ARTIFACTS_DIR, Y_TRAIN_PATH, Y_VAL_PATH, Y_TEST_PATH,
-    TOKENIZED_TRAIN, TOKENIZED_VAL, TOKENIZED_TEST,
-    LABEL_LIST_PATH, BEST_PARAMS_PATH,
-    HP_TUNED_MODEL_PATH
+    ARTIFACTS_DIR, OS_Y_TRAIN_PATH, Y_VAL_PATH, Y_TEST_PATH,
+    TOKENIZED_TRAIN_OS, TOKENIZED_VAL, TOKENIZED_TEST,
+    LABEL_LIST_PATH, OS_BEST_PARAMS_PATH, HP_TUNED_OS_MODEL_PATH
 )
 import json
 from datasets import Value
@@ -31,11 +30,11 @@ from datasets import load_from_disk, Sequence, Value
 
 
 def load_data():
-    train_ds = load_from_disk(TOKENIZED_TRAIN)
+    train_ds = load_from_disk(TOKENIZED_TRAIN_OS)
     val_ds = load_from_disk(TOKENIZED_VAL)
     test_ds = load_from_disk(TOKENIZED_TEST)
 
-    y_train = np.load(Y_TRAIN_PATH, allow_pickle=True).astype("float32")
+    y_train = np.load(OS_Y_TRAIN_PATH, allow_pickle=True).astype("float32")
     y_val   = np.load(Y_VAL_PATH, allow_pickle=True).astype("float32")
     y_test  = np.load(Y_TEST_PATH, allow_pickle=True).astype("float32")
 
@@ -90,9 +89,9 @@ def float_data_collator(features):
 
 def train_legalbert_with_best_params():
 
-    os.makedirs(os.path.dirname(HP_TUNED_MODEL_PATH), exist_ok=True)
+    os.makedirs(os.path.dirname(HP_TUNED_OS_MODEL_PATH), exist_ok=True)
     # Load best params from JSON
-    with open(BEST_PARAMS_PATH, "r") as f:
+    with open(OS_BEST_PARAMS_PATH, "r") as f:
         best_params = json.load(f)
 
     # Initialize WandB run
@@ -120,7 +119,7 @@ def train_legalbert_with_best_params():
     model = get_legalbert_model(num_labels=len(label_list))
 
     training_args = TrainingArguments(
-        output_dir=HP_TUNED_MODEL_PATH,
+        output_dir=HP_TUNED_OS_MODEL_PATH,
         eval_strategy="epoch",
         save_strategy="epoch",
         learning_rate=best_params["learning_rate"],
@@ -130,13 +129,13 @@ def train_legalbert_with_best_params():
         weight_decay=best_params["weight_decay"],
         warmup_ratio=best_params["warmup_ratio"],
         gradient_accumulation_steps=best_params.get("grad_accum", 1),
-        logging_dir=os.path.join(HP_TUNED_MODEL_PATH, "logs"),
+        logging_dir=os.path.join(HP_TUNED_OS_MODEL_PATH, "logs"),
         logging_steps=100,
         load_best_model_at_end=True,
         metric_for_best_model="micro_f1",
         greater_is_better=True,
         report_to="wandb",
-        run_name="legal-bert-with-hp"
+        run_name="legal-bert-with-hp-and-os"
     )
 
     trainer = FocalLossTrainer(
@@ -151,21 +150,21 @@ def train_legalbert_with_best_params():
     trainer.train()
 
     # Save model locally
-    trainer.save_model(HP_TUNED_MODEL_PATH)
-    print(f"Model saved at {HP_TUNED_MODEL_PATH}")
+    trainer.save_model(HP_TUNED_OS_MODEL_PATH)
+    print(f"Model saved at {HP_TUNED_OS_MODEL_PATH}")
 
     # Upload model as next version of W&B artifact
     artifact = wandb.Artifact(
         name="legal-bert-v2", 
         type="model",
-        description="LegalBERT model fine-tuned with focal loss and hyperparameters.",
+        description="LegalBERT model fine-tuned with oversampling, focal loss and hp.",
         metadata=best_params
     )
 
     # Add saved model files to the artifact
-    artifact.add_file(os.path.join(HP_TUNED_MODEL_PATH, "model.safetensors"))
-    artifact.add_file(os.path.join(HP_TUNED_MODEL_PATH, "config.json"))
-    artifact.add_file(os.path.join(HP_TUNED_MODEL_PATH, "training_args.bin"))
+    artifact.add_file(os.path.join(HP_TUNED_OS_MODEL_PATH, "model.safetensors"))
+    artifact.add_file(os.path.join(HP_TUNED_OS_MODEL_PATH, "config.json"))
+    artifact.add_file(os.path.join(HP_TUNED_OS_MODEL_PATH, "training_args.bin"))
 
     # Log the new version of the model
     run.log_artifact(artifact)
