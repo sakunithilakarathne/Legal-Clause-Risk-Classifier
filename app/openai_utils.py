@@ -1,0 +1,86 @@
+import os
+import json
+import re
+from openai import OpenAI
+
+from config import LABEL_LIST_PATH
+
+# Initialize OpenAI client once
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+
+def load_labels(label_file: str = LABEL_LIST_PATH):
+    """Load categories from JSON file."""
+    with open(label_file, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+SYSTEM_PROMPT = """You are a legal classification assistant.
+You will classify a legal clause into CUAD categories.
+Always return JSON only, with exactly three ranked predictions
+and one plain-English explanation. Each prediction must include:
+- rank (1 to 3)
+- category (must be from the provided category list)
+- confidence (0 to 1)
+"""
+
+FEW_SHOT_EXAMPLES = """
+Example:
+
+Clause: "The contractor shall not disclose any confidential information obtained during performance."
+
+JSON:
+{
+  "predictions": [
+    {"rank": 1, "category": "Confidentiality", "confidence": 0.95},
+    {"rank": 2, "category": "Assignment", "confidence": 0.10},
+    {"rank": 3, "category": "Limitation of Liability", "confidence": 0.05}
+  ],
+  "explanation": "This clause says that private information cannot be shared, which is a confidentiality obligation."
+}
+"""
+
+
+def safe_extract_json(text: str):
+    """Try to extract valid JSON from the model's response."""
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        match = re.search(r'\{.*\}', text, re.DOTALL)
+        if match:
+            try:
+                return json.loads(match.group(0))
+            except json.JSONDecodeError:
+                # attempt simple fix for single quotes
+                s = match.group(0).replace("'", '"')
+                return json.loads(s)
+        raise ValueError(f"Could not parse JSON from response: {text[:200]}")
+
+
+def classify_clause_gpt(clause: str, categories: list, model: str = "gpt-4o-mini"):
+    """
+    Classify a single legal clause using GPT.
+    Returns dict with predictions and explanation.
+    """
+    user_prompt = f"""
+{FEW_SHOT_EXAMPLES}
+
+CATEGORIES:
+{json.dumps(categories)}
+
+Clause: "{clause}"
+
+Return JSON only.
+"""
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt}
+        ],
+        temperature=0.0,
+        max_tokens=400
+    )
+    text = response.choices[0].message.content.strip()
+    return safe_extract_json(text)
+
