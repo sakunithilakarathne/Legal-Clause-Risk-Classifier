@@ -18,7 +18,8 @@ from transformers import (
 )
 from src.legal_clause_classifier.optimization.class_imbalance_handling import FocalLossTrainer
 from config import (TOKENIZED_TRAIN, TOKENIZED_VAL, Y_TRAIN_PATH, Y_VAL_PATH, ARTIFACTS_DIR,
-                    LABEL_LIST_PATH, LEGAL_BERT_MODEL_PATH, LOGS_DIR, BEST_PARAMS_PATH, HP_ARTIFACTS_PATH)
+                    LABEL_LIST_PATH, LOGS_DIR, BEST_PARAMS_PATH, OS_BEST_PARAMS_PATH,
+                    HP_ARTIFACTS_PATH,TOKENIZED_TRAIN_OS, OS_Y_TRAIN_PATH)
 
 
 
@@ -26,10 +27,10 @@ MODEL_NAME = "nlpaueb/legal-bert-base-uncased"
 
 # -------------------- Load Data --------------------
 def load_data():
-    train_ds = load_from_disk(TOKENIZED_TRAIN)
+    train_ds = load_from_disk(TOKENIZED_TRAIN_OS)
     val_ds = load_from_disk(TOKENIZED_VAL)
 
-    y_train = np.load(Y_TRAIN_PATH, allow_pickle=True).astype("float32")
+    y_train = np.load(OS_Y_TRAIN_PATH, allow_pickle=True).astype("float32")
     y_val   = np.load(Y_VAL_PATH, allow_pickle=True).astype("float32")
 
     train_ds = train_ds.add_column("labels", list(y_train))
@@ -93,17 +94,17 @@ def objective(trial):
 
     # Sample hyperparameters
     learning_rate = trial.suggest_float("learning_rate", 2e-5, 5e-5, log=True)
-    weight_decay = trial.suggest_float("weight_decay", 1e-5, 0.05, log=True)
+    weight_decay = trial.suggest_float("weight_decay", 0.0, 0.02, log=True)
     per_device_batch_size = trial.suggest_categorical("batch_size", [8, 16, 32])
-    num_train_epochs = trial.suggest_int("epochs", 3, 6)
-    warmup_ratio = trial.suggest_float("warmup_ratio", 0.0, 0.2)
-    dropout_rate = trial.suggest_float("dropout", 0.1, 0.5)
-    grad_accum = trial.suggest_categorical("grad_accum", [1, 2, 4])
+    num_train_epochs = trial.suggest_int("epochs", 3, 5)
+    warmup_ratio = trial.suggest_float("warmup_ratio", 0.0, 0.1)
+    dropout_rate = trial.suggest_float("dropout", 0.2, 0.4)
+    grad_accum = trial.suggest_categorical("grad_accum", [1, 2])
 
     # W&B logging
     wandb.init(
         project="legal-clause-classifier",
-        name=f"optuna-trial-{trial.number}",
+        name=f"hp-trial-{trial.number}",
         reinit=True,
         config={
             "learning_rate": learning_rate,
@@ -169,17 +170,17 @@ def hyperparameter_tuning():
     study = optuna.create_study(
         direction="maximize",
         pruner= pruner,
-        study_name="legalbert_hp_tuning"
+        study_name="HP_Tuning_for_OS_with_FL"
     )
     study.optimize(objective, n_trials=35,timeout=None)  
     best_trial = study.best_trial
     best_params = best_trial.params
     
-    os.makedirs(os.path.dirname(BEST_PARAMS_PATH), exist_ok=True)
-    with open(BEST_PARAMS_PATH, "w") as f:
+    os.makedirs(os.path.dirname(OS_BEST_PARAMS_PATH), exist_ok=True)
+    with open(OS_BEST_PARAMS_PATH, "w") as f:
         json.dump(best_params, f, indent=4)
 
-    print(f"Best parameters saved to {BEST_PARAMS_PATH}")
+    print(f"Best parameters saved to {OS_BEST_PARAMS_PATH}")
     print("Best trial:", best_params)
 
     # Save Optimization History

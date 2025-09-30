@@ -329,7 +329,7 @@ def train_legalbert_with_focal_loss():
 
 
 
-########### Legal BERT with Resampling #############
+########### Legal BERT with Weighted Sampling #############
 
 def train_legalbert_with_resampling():
     run = wandb.init(
