@@ -94,7 +94,7 @@ Return JSON only.
 # -------------------------
 # MAIN
 # -------------------------
-def main():
+def run_gpt_clause_classifier():
     # Load label list
     categories = load_labels("label_list.json")
 
