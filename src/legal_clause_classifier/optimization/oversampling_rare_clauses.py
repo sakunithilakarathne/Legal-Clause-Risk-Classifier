@@ -46,8 +46,9 @@ def oversample_multi_label_dataset():
     oversampled_dataset = concatenate_datasets(datasets_to_concat)
     oversampled_labels = np.vstack(labels_to_concat)
     print("After oversampling per class:", oversampled_labels.sum(axis=0))
-    
-    # Re-assign labels column
+
+    # Replace the existing 'labels' column instead of adding
+    oversampled_dataset = oversampled_dataset.remove_columns("labels")
     oversampled_dataset = oversampled_dataset.add_column("labels", list(oversampled_labels))
     
     oversampled_dataset.save_to_disk(os.path.join(ARTIFACTS_DIR, "train_oversampled"))
