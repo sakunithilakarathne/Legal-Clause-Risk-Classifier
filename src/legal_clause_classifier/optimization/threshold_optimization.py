@@ -7,7 +7,7 @@ from transformers import AutoModelForSequenceClassification, DataCollatorWithPad
 from datasets import load_from_disk
 from sklearn.metrics import f1_score, average_precision_score, accuracy_score
 from config import (TOKENIZED_VAL, Y_VAL_PATH, LEGAL_BERT_WITH_FOCAL_LOSS_PATH,
-                    THRESHOLDS_PATH, THRESHOLD_METRICS_PATH, WANDB_ARTIFACTS_PATH)
+                    THRESHOLDS_PATH, THRESHOLD_METRICS_PATH, WANDB_ARTIFACTS_PATH, HP_TUNED_MODEL_PATH)
 import wandb
 
 
@@ -86,13 +86,13 @@ def run_threshold_optimization():
                job_type="threshold_opt")
     
     # Use the artifact
-    artifact = run.use_artifact(
-        'scsthilakarathne-nibm/legal-clause-classifier/legal-bert-v2:v2', 
-        type='model'
-    )
+    # artifact = run.use_artifact(
+    #     'scsthilakarathne-nibm/legal-clause-classifier/legal-bert-v2:v2', 
+    #     type='model'
+    # )
     
     # Download artifact and get local path
-    model_dir = artifact.download()
+    #model_dir = artifact.download()
     
     # Load validation dataset
     val_ds, y_val = load_val_dataset()
@@ -101,7 +101,7 @@ def run_threshold_optimization():
     # Load trained model
     num_labels = y_val.shape[1]
     model = AutoModelForSequenceClassification.from_pretrained(
-        WANDB_ARTIFACTS_PATH = artifact.download(), 
+        HP_TUNED_MODEL_PATH, 
         num_labels=num_labels, 
         local_files_only=True,
         problem_type="multi_label_classification")
