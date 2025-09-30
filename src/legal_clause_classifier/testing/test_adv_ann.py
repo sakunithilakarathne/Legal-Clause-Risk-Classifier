@@ -22,7 +22,7 @@ def load_data():
     return X_test, y_test, X_test.shape[1], y_test.shape[1]
 
 
-def test_advanced_ann_model():
+def evaluate_advanced_ann_model():
     X_test, y_test, input_dim, num_labels = load_data()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"

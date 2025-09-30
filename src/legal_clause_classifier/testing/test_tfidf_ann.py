@@ -12,7 +12,7 @@ from config import (
     ANN_MODEL_PATH
 )
 
-def test_tfidf_ann_model():
+def evaluate_tfidf_ann_model():
     X_test = sp.load_npz(X_TEST_TFIDF_PATH)
     X_test = torch.tensor(X_test.toarray(), dtype=torch.float32)
     

@@ -41,7 +41,7 @@ def evaluate_epoch(model, val_loader, device):
     return micro_f1, macro_f1, pr_auc
 
 
-def test_lstm_model():
+def evaluate_lstm_model():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     with open(LSTM_VOCAB_PATH, "rb") as f:

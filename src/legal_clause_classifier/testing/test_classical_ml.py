@@ -16,7 +16,7 @@ def load_test_data():
     y_test = np.load(Y_TEST_PATH, allow_pickle=True)
     return X_test, y_test
 
-def test_logistic_ml_model():
+def evaluate_logistic_ml_model():
     print("🔹 Loading test data...")
     X_test, y_test = load_test_data()
 
