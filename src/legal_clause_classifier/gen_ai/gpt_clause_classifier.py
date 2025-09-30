@@ -2,7 +2,7 @@ import os
 import openai
 import json
 import re
-
+from config import LABEL_LIST_PATH
 # -------------------------
 # SETUP
 # -------------------------
@@ -13,7 +13,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 # -------------------------
 # LOAD LABEL LIST
 # -------------------------
-def load_labels(label_file: str = "label_list.json"):
+def load_labels(label_file: str = LABEL_LIST_PATH):
     """Load categories from JSON file."""
     with open(label_file, "r", encoding="utf-8") as f:
         return json.load(f)
