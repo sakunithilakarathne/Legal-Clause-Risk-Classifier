@@ -94,7 +94,7 @@ def objective(trial):
 
     # Sample hyperparameters
     learning_rate = trial.suggest_float("learning_rate", 2e-5, 5e-5, log=True)
-    weight_decay = trial.suggest_float("weight_decay", 0.0, 0.02, log=True)
+    weight_decay = trial.suggest_float("weight_decay", 0.0, 0.02)
     per_device_batch_size = trial.suggest_categorical("batch_size", [8, 16, 32])
     num_train_epochs = trial.suggest_int("epochs", 3, 5)
     warmup_ratio = trial.suggest_float("warmup_ratio", 0.0, 0.1)
