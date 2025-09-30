@@ -96,7 +96,7 @@ Return JSON only.
 # -------------------------
 def run_gpt_clause_classifier():
     # Load label list
-    categories = load_labels("label_list.json")
+    categories = load_labels(LABEL_LIST_PATH)
 
     # Take clause input
     clause = input("\nEnter a legal clause: ").strip()
