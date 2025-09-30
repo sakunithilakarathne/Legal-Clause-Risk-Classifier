@@ -85,14 +85,12 @@ def run_threshold_optimization():
                name="threshold-optimization",
                job_type="threshold_opt")
     
-    # Use the artifact
-    # artifact = run.use_artifact(
-    #     'scsthilakarathne-nibm/legal-clause-classifier/legal-bert-v2:v2', 
-    #     type='model'
-    # )
+    # Use artifact
+    artifact = run.use_artifact(
+        'scsthilakarathne-nibm/legal-clause-classifier/legal-bert-v2:v8', 
+        type='model')
+    artifact_dir = artifact.download()
     
-    # Download artifact and get local path
-    #model_dir = artifact.download()
     
     # Load validation dataset
     val_ds, y_val = load_val_dataset()
@@ -101,9 +99,8 @@ def run_threshold_optimization():
     # Load trained model
     num_labels = y_val.shape[1]
     model = AutoModelForSequenceClassification.from_pretrained(
-        HP_TUNED_MODEL_PATH, 
+        artifact_dir, 
         num_labels=num_labels, 
-        local_files_only=True,
         problem_type="multi_label_classification")
     model.to(DEVICE)
 
@@ -123,12 +120,12 @@ def run_threshold_optimization():
 
     # Adding artifacts to wandb
     thresholds_artifact = wandb.Artifact(
-        name="thresholds-v1",  
+        name="thresholds-v2",  
         type="thresholds",    
-        description="Optimized decision thresholds for LegalBERT model with focal loss",
+        description="Optimized decision thresholds for LegalBERT model with focal loss, oversampling and best params",
         metadata={
             "note": "Thresholds optimized on validation set",
-            "model_version": "legal-bert-v2 with focal loss"
+            "model_version": "os-legal-bert with focal loss and best hp"
         }
     )
 
