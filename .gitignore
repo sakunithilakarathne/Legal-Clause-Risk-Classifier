@@ -232,3 +232,17 @@ artifacts/legalbert_with_focalloss_outputs/model.safetensors
 *.safetensors
 *.bin
 *.safetensors
+
+# Unnecessary files
+Notebooks/report.ipynb
+artifacts/os_hp_tuned_model_outputs/
+artifacts/pos_weight.npy
+artifacts/test.parquet
+artifacts/test_tokenized/cache-dfaac8d92d61054f.arrow
+artifacts/train_tokenized/cache-e88b426b1669aae9.arrow
+artifacts/val.parquet
+artifacts/val_tokenized/cache-c2455617c20c5764.arrow
+artifacts/logistic_model.pkl
+
+
+
